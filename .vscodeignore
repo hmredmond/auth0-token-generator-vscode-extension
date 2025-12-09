@@ -8,7 +8,6 @@ vsc-extension-quickstart.md
 **/tsconfig.json
 **/.eslintrc.json
 **/*.ts
-node_modules/**
 *.vsix
 .DS_Store
 *.log
