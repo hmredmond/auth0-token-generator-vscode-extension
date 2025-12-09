@@ -16,7 +16,7 @@
     "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension/issues"
   },
   "homepage": "https://github.com/hmredmond/oauth-token-generator-vscode-extension#readme",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.74.0"
   },
