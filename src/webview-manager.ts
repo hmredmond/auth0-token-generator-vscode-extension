@@ -25,7 +25,9 @@ export class WebviewManager {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        retainContextWhenHidden: true
+        retainContextWhenHidden: true,
+        enableCommandUris: true,
+        enableForms: true
       }
     );
 
@@ -233,6 +235,23 @@ export class WebviewManager {
             justify-content: center;
             padding: 20px;
         }
+        .confirm-dialog {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 20px;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .confirm-dialog .confirm-message {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .confirm-dialog .confirm-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
         .modal-content {
             background-color: var(--vscode-editor-background);
             border: 1px solid var(--vscode-panel-border);
@@ -365,6 +384,17 @@ export class WebviewManager {
         </div>
     </div>
 
+    <!-- Confirmation Dialog -->
+    <div class="modal-overlay" id="confirmDialog">
+        <div class="confirm-dialog">
+            <div class="confirm-message" id="confirmMessage"></div>
+            <div class="confirm-buttons">
+                <button class="button secondary" id="confirmCancel">Cancel</button>
+                <button class="button" id="confirmOk">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Container -->
     <div class="container">
         <h1>OAuth Token Generator Configuration</h1>
@@ -381,6 +411,35 @@ export class WebviewManager {
     <script>
         const vscode = acquireVsCodeApi();
         let headerCounter = 0;
+        let confirmCallback = null;
+
+        // Confirmation dialog management
+        const confirmDialog = document.getElementById('confirmDialog');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmOk = document.getElementById('confirmOk');
+        const confirmCancel = document.getElementById('confirmCancel');
+
+        function showConfirm(message, callback) {
+            confirmMessage.textContent = message;
+            confirmCallback = callback;
+            confirmDialog.classList.add('active');
+        }
+
+        function hideConfirm(confirmed) {
+            confirmDialog.classList.remove('active');
+            if (confirmCallback) {
+                confirmCallback(confirmed);
+                confirmCallback = null;
+            }
+        }
+
+        confirmOk.addEventListener('click', () => hideConfirm(true));
+        confirmCancel.addEventListener('click', () => hideConfirm(false));
+        confirmDialog.addEventListener('click', (e) => {
+            if (e.target === confirmDialog) {
+                hideConfirm(false);
+            }
+        });
 
         // Modal management
         const modalOverlay = document.getElementById('modalOverlay');
@@ -477,13 +536,15 @@ export class WebviewManager {
 
                 if (action === 'delete') {
                     console.log('Delete action triggered');
-                    if (confirm(\`Are you sure you want to delete the environment "\${envName}"?\`)) {
-                        console.log('Delete confirmed, sending message...');
-                        vscode.postMessage({
-                            type: 'deleteEnvironment',
-                            data: { name: envName }
-                        });
-                    }
+                    showConfirm(\`Are you sure you want to delete the environment "\${envName}"?\`, (confirmed) => {
+                        if (confirmed) {
+                            console.log('Delete confirmed, sending message...');
+                            vscode.postMessage({
+                                type: 'deleteEnvironment',
+                                data: { name: envName }
+                            });
+                        }
+                    });
                 } else if (action === 'edit') {
                     openModal('Edit Environment');
                     vscode.postMessage({
