@@ -466,14 +466,38 @@ export class WebviewManager {
             return headers;
         }
 
-        // Make functions globally accessible for inline onclick handlers
-        window.editEnvironment = function(envName) {
-            openModal('Edit Environment');
-            vscode.postMessage({
-                type: 'loadEnvironment',
-                data: { name: envName }
-            });
-        };
+        // Set up event delegation for environment action buttons
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.dataset && target.dataset.action) {
+                const action = target.dataset.action;
+                const envName = target.dataset.envName;
+
+                console.log('Button clicked:', action, 'for environment:', envName);
+
+                if (action === 'delete') {
+                    console.log('Delete action triggered');
+                    if (confirm(\`Are you sure you want to delete the environment "\${envName}"?\`)) {
+                        console.log('Delete confirmed, sending message...');
+                        vscode.postMessage({
+                            type: 'deleteEnvironment',
+                            data: { name: envName }
+                        });
+                    }
+                } else if (action === 'edit') {
+                    openModal('Edit Environment');
+                    vscode.postMessage({
+                        type: 'loadEnvironment',
+                        data: { name: envName }
+                    });
+                } else if (action === 'getToken') {
+                    vscode.postMessage({
+                        type: 'getToken',
+                        data: { name: envName }
+                    });
+                }
+            }
+        });
 
         document.getElementById('credentialsForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -520,36 +544,26 @@ export class WebviewManager {
             vscode.postMessage({ type: 'loadEnvironments' });
         }
 
-        window.deleteEnvironment = function(name) {
-            if (confirm('Are you sure you want to delete this environment?')) {
-                vscode.postMessage({
-                    type: 'deleteEnvironment',
-                    data: { name: name }
-                });
-            }
-        };
-
-        window.getToken = function(envName) {
-            vscode.postMessage({
-                type: 'getToken',
-                data: { name: envName }
-            });
-        };
-
         // Load environments on page load
         loadEnvironments();
 
         // Listen for messages from the extension
         window.addEventListener('message', event => {
             const message = event.data;
+            console.log('Received message from extension:', message.type);
 
             switch (message.type) {
                 case 'environmentsLoaded':
+                    console.log('Loading environments:', message.data.environments);
                     displayEnvironments(message.data.environments, message.data.currentEnv);
                     break;
                 case 'credentialsSaved':
                     // Keep the form as-is (don't reset) and close the modal
                     closeModalFn();
+                    loadEnvironments();
+                    break;
+                case 'environmentDeleted':
+                    console.log('Environment deleted, reloading list...');
                     loadEnvironments();
                     break;
                 case 'environmentLoaded':
@@ -595,9 +609,9 @@ export class WebviewManager {
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <button class="button secondary icon" onclick="getToken('\${env.name}')" title="Get Token">↻</button>
-                                <button class="button secondary icon" onclick="editEnvironment('\${env.name}')" title="Edit">✎</button>
-                                <button class="button secondary icon" onclick="deleteEnvironment('\${env.name}')" title="Delete">×</button>
+                                <button class="button secondary icon" data-action="getToken" data-env-name="\${env.name}" title="Get Token">↻</button>
+                                <button class="button secondary icon" data-action="edit" data-env-name="\${env.name}" title="Edit">✎</button>
+                                <button class="button secondary icon" data-action="delete" data-env-name="\${env.name}" title="Delete">×</button>
                             </div>
                         </div>
                     </div>
@@ -710,13 +724,21 @@ export class WebviewManager {
 
   private async handleDeleteEnvironment(name: string): Promise<void> {
     try {
+      console.log('Deleting environment:', name);
       await this.storageManager.deleteEnvironment(name);
+      console.log('Environment deleted successfully');
       vscode.window.showInformationMessage(`✓ Environment '${name}' deleted successfully`);
 
-      // Reload the environments list
+      // Send confirmation back to webview
+      this.panel?.webview.postMessage({
+        type: 'environmentDeleted'
+      });
+
+      // Also reload the environments list
       await this.handleLoadEnvironments();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Delete environment failed:', error);
       vscode.window.showErrorMessage(`Failed to delete environment: ${errorMessage}`);
     }
   }
