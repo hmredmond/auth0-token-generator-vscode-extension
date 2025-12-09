@@ -84,4 +84,31 @@ export class StorageManager {
 
     await this.context.globalState.update(StorageManager.TOKENS_KEY, validTokens);
   }
+
+  async deleteEnvironment(environmentName: string): Promise<void> {
+    const envNames = this.context.globalState.get<string[]>(StorageManager.ENVIRONMENTS_KEY, []);
+    const updatedEnvNames = envNames.filter(name => name !== environmentName);
+
+    // Remove credentials from secrets
+    await this.context.secrets.delete(`${StorageManager.ENVIRONMENTS_KEY}.${environmentName}`);
+
+    // Update environment names in global state
+    await this.context.globalState.update(StorageManager.ENVIRONMENTS_KEY, updatedEnvNames);
+
+    // If this was the current environment, clear it
+    const currentEnv = await this.getCurrentEnvironment();
+    if (currentEnv === environmentName) {
+      await this.context.globalState.update(StorageManager.CURRENT_ENV_KEY, undefined);
+    }
+
+    // Remove any tokens associated with this environment
+    const tokens = await this.getStoredTokens();
+    const updatedTokens: Record<string, StoredToken> = {};
+    Object.entries(tokens).forEach(([key, token]) => {
+      if (token.environment !== environmentName) {
+        updatedTokens[key] = token;
+      }
+    });
+    await this.context.globalState.update(StorageManager.TOKENS_KEY, updatedTokens);
+  }
 }

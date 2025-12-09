@@ -49,6 +49,9 @@ export class WebviewManager {
           case 'deleteEnvironment':
             await this.handleDeleteEnvironment(message.data.name);
             break;
+          case 'getToken':
+            await this.handleGetToken(message.data.name);
+            break;
         }
       }
     );
@@ -202,13 +205,79 @@ export class WebviewManager {
             padding: 8px 12px;
             flex-shrink: 0;
         }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 24px;
+            max-width: 600px;
+            width: 100%;
+            margin-top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-modal:hover {
+            background-color: var(--vscode-toolbar-hoverBackground);
+            border-radius: 4px;
+        }
+        .environments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>OAuth Token Generator Configuration</h1>
+    <!-- Modal for Add/Edit Environment -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Add Environment</div>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
 
-        <form id="credentialsForm">
+            <form id="credentialsForm">
             <div class="form-group">
                 <label for="environmentName">Environment Name:</label>
                 <input type="text" id="environmentName" placeholder="e.g., dev, staging, prod" required>
@@ -282,8 +351,17 @@ export class WebviewManager {
                 <button type="button" class="button secondary" id="testBtn">Test Connection</button>
             </div>
         </form>
+        </div>
+    </div>
 
-        <div class="section-title">Configured Environments</div>
+    <!-- Main Container -->
+    <div class="container">
+        <h1>OAuth Token Generator Configuration</h1>
+
+        <div class="environments-header">
+            <div class="section-title" style="margin: 0;">Configured Environments</div>
+            <button type="button" class="button" id="addNewBtn">+ Add New Environment</button>
+        </div>
         <div id="environmentsList" class="environment-list">
             <!-- Environments will be loaded here -->
         </div>
@@ -292,6 +370,38 @@ export class WebviewManager {
     <script>
         const vscode = acquireVsCodeApi();
         let headerCounter = 0;
+
+        // Modal management
+        const modalOverlay = document.getElementById('modalOverlay');
+        const closeModal = document.getElementById('closeModal');
+        const addNewBtn = document.getElementById('addNewBtn');
+        const modalTitle = document.getElementById('modalTitle');
+
+        function openModal(title = 'Add Environment') {
+            modalTitle.textContent = title;
+            modalOverlay.classList.add('active');
+        }
+
+        function closeModalFn() {
+            modalOverlay.classList.remove('active');
+        }
+
+        addNewBtn.addEventListener('click', () => {
+            // Clear the form for new environment
+            document.getElementById('credentialsForm').reset();
+            document.getElementById('customHeadersContainer').innerHTML = '';
+            headerCounter = 0;
+            openModal('Add New Environment');
+        });
+
+        closeModal.addEventListener('click', closeModalFn);
+
+        // Close modal when clicking outside
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModalFn();
+            }
+        });
 
         // Dynamic header management
         document.getElementById('addHeaderBtn').addEventListener('click', () => {
@@ -346,6 +456,7 @@ export class WebviewManager {
         }
 
         function editEnvironment(envName) {
+            openModal('Edit Environment');
             vscode.postMessage({
                 type: 'loadEnvironment',
                 data: { name: envName }
@@ -405,7 +516,14 @@ export class WebviewManager {
                 });
             }
         }
-        
+
+        function getToken(envName) {
+            vscode.postMessage({
+                type: 'getToken',
+                data: { name: envName }
+            });
+        }
+
         // Load environments on page load
         loadEnvironments();
 
@@ -418,9 +536,8 @@ export class WebviewManager {
                     displayEnvironments(message.data.environments, message.data.currentEnv);
                     break;
                 case 'credentialsSaved':
-                    document.getElementById('credentialsForm').reset();
-                    document.getElementById('customHeadersContainer').innerHTML = '';
-                    headerCounter = 0;
+                    // Keep the form as-is (don't reset) and close the modal
+                    closeModalFn();
                     loadEnvironments();
                     break;
                 case 'environmentLoaded':
@@ -444,9 +561,6 @@ export class WebviewManager {
                     headers.forEach(header => {
                         addHeaderRow(header.key, header.value);
                     });
-
-                    // Scroll to top of form
-                    document.getElementById('credentialsForm').scrollIntoView({ behavior: 'smooth' });
                     break;
             }
         });
@@ -469,6 +583,7 @@ export class WebviewManager {
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
+                                <button class="button" onclick="getToken('\${env.name}')">Get Token</button>
                                 <button class="button secondary" onclick="editEnvironment('\${env.name}')">Edit</button>
                                 <button class="button secondary" onclick="deleteEnvironment('\${env.name}')">Delete</button>
                             </div>
@@ -582,8 +697,80 @@ export class WebviewManager {
   }
 
   private async handleDeleteEnvironment(name: string): Promise<void> {
-    // Note: This is a simplified implementation
-    // In a real extension, you'd want to properly delete from secrets storage
-    vscode.window.showInformationMessage(`Environment ${name} deletion requested. Restart VS Code to complete removal.`);
+    try {
+      await this.storageManager.deleteEnvironment(name);
+      vscode.window.showInformationMessage(`✓ Environment '${name}' deleted successfully`);
+
+      // Reload the environments list
+      await this.handleLoadEnvironments();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to delete environment: ${errorMessage}`);
+    }
+  }
+
+  private async handleGetToken(envName: string): Promise<void> {
+    try {
+      const environments = await this.storageManager.getEnvironments();
+      const environment = environments.find(env => env.name === envName);
+
+      if (!environment) {
+        vscode.window.showErrorMessage(`Environment '${envName}' not found`);
+        return;
+      }
+
+      // Check for cached valid token first
+      await this.storageManager.removeExpiredTokens();
+      const storedTokens = await this.storageManager.getStoredTokens();
+      const audience = environment.credentials.audience || '';
+      const scope = environment.credentials.scope || '';
+      const tokenKey = `${environment.name}-${audience}-${scope}`;
+
+      const cachedToken = storedTokens[tokenKey];
+      if (cachedToken && cachedToken.expiresAt > Date.now() + 60000) { // 1 minute buffer
+        await vscode.env.clipboard.writeText(cachedToken.token);
+        const expiresIn = Math.round((cachedToken.expiresAt - Date.now()) / 1000);
+        vscode.window.showInformationMessage(
+          `✓ Cached token for '${envName}' copied to clipboard! (expires in ${expiresIn}s)`
+        );
+        return;
+      }
+
+      // Generate new token
+      const oauthClient = new OAuthClient(environment.credentials);
+
+      await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `Generating token for '${envName}'...`,
+        cancellable: false
+      }, async (progress) => {
+        progress.report({ increment: 50, message: "Requesting token from provider..." });
+
+        const tokenResponse = await oauthClient.generateToken();
+
+        progress.report({ increment: 50, message: "Processing response..." });
+
+        // Store the token
+        const storedToken = {
+          token: tokenResponse.access_token,
+          expiresAt: Date.now() + (tokenResponse.expires_in * 1000),
+          environment: environment.name,
+          audience: audience,
+          scope: scope
+        };
+
+        await this.storageManager.storeToken(storedToken);
+        await vscode.env.clipboard.writeText(tokenResponse.access_token);
+
+        const expiresInMinutes = Math.round(tokenResponse.expires_in / 60);
+        vscode.window.showInformationMessage(
+          `✓ Token for '${envName}' generated and copied to clipboard! (expires in ${expiresInMinutes}m)`
+        );
+      });
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to generate token for '${envName}': ${errorMessage}`);
+    }
   }
 }
