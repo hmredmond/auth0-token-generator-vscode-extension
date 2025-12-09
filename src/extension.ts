@@ -6,7 +6,7 @@ let commandManager: CommandManager;
 let statusBarManager: StatusBarManager;
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('Auth0 Token Generator extension is now active!');
+  console.log('OAuth Token Generator extension is now active!');
 
   // Initialize managers
   commandManager = new CommandManager(context);
@@ -14,28 +14,28 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register commands
   const generateTokenCommand = vscode.commands.registerCommand(
-    'auth0-token-generator.generateToken',
+    'oauth-token-generator.generateToken',
     () => commandManager.generateToken()
   );
 
   const configureCredentialsCommand = vscode.commands.registerCommand(
-    'auth0-token-generator.configureCredentials',
+    'oauth-token-generator.configureCredentials',
     () => commandManager.configureCredentials()
   );
 
   const selectEnvironmentCommand = vscode.commands.registerCommand(
-    'auth0-token-generator.selectEnvironment',
+    'oauth-token-generator.selectEnvironment',
     () => commandManager.selectEnvironment()
   );
 
   const viewStoredTokensCommand = vscode.commands.registerCommand(
-    'auth0-token-generator.viewStoredTokens',
+    'oauth-token-generator.viewStoredTokens',
     () => commandManager.viewStoredTokens()
   );
 
   // Register event listeners
   const onConfigurationChanged = vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('auth0TokenGenerator')) {
+    if (e.affectsConfiguration('oauthTokenGenerator')) {
       statusBarManager.updateStatusBar();
     }
   });
@@ -53,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
   const hasShownWelcome = context.globalState.get('hasShownWelcome', false);
   if (!hasShownWelcome) {
     vscode.window.showInformationMessage(
-      'Welcome to Auth0 Token Generator! Configure your credentials to get started.',
+      'Welcome to OAuth Token Generator! Configure your OAuth credentials to get started.',
       'Configure Now',
       'Later'
     ).then(selection => {

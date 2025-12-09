@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { Auth0Client } from './auth0-client';
+import { OAuthClient } from './oauth-client';
 import { StorageManager } from './storage-manager';
 import { WebviewManager } from './webview-manager';
-import { Auth0Credentials, StoredToken, Auth0Environment } from './types';
+import { OAuthCredentials, StoredToken, OAuthEnvironment } from './types';
 
 export class CommandManager {
   private storageManager: StorageManager;
@@ -16,13 +16,13 @@ export class CommandManager {
   async generateToken(): Promise<void> {
     try {
       const currentEnv = await this.storageManager.getCurrentEnvironment();
-      let environment: Auth0Environment | undefined;
+      let environment: OAuthEnvironment | undefined;
 
       if (!currentEnv) {
         const environments = await this.storageManager.getEnvironments();
         if (environments.length === 0) {
           vscode.window.showInformationMessage(
-            'No Auth0 environments configured. Please configure credentials first.',
+            'No OAuth environments configured. Please configure credentials first.',
             'Configure Now'
           ).then(selection => {
             if (selection === 'Configure Now') {
@@ -67,16 +67,16 @@ export class CommandManager {
         return;
       }
 
-      const auth0Client = new Auth0Client(environment.credentials);
-      
+      const oauthClient = new OAuthClient(environment.credentials);
+
       vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Generating Auth0 bearer token...",
+        title: "Generating OAuth bearer token...",
         cancellable: false
       }, async (progress) => {
-        progress.report({ increment: 50, message: "Requesting token from Auth0..." });
-        
-        const tokenResponse = await auth0Client.generateToken();
+        progress.report({ increment: 50, message: "Requesting token from provider..." });
+
+        const tokenResponse = await oauthClient.generateToken();
         
         progress.report({ increment: 50, message: "Processing response..." });
         
@@ -128,11 +128,11 @@ export class CommandManager {
 
     const options = environments.map(env => ({
       label: env.name,
-      description: env.credentials.domain
+      description: `${env.credentials.provider} - ${env.credentials.tokenEndpoint}`
     }));
 
     const selected = await vscode.window.showQuickPick(options, {
-      placeHolder: 'Select Auth0 environment'
+      placeHolder: 'Select OAuth environment'
     });
 
     if (selected) {

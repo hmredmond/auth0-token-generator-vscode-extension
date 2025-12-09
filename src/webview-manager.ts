@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { StorageManager } from './storage-manager';
-import { Auth0Client } from './auth0-client';
-import { Auth0Credentials } from './types';
+import { OAuthClient } from './oauth-client';
+import { OAuthCredentials } from './types';
 
 export class WebviewManager {
   private context: vscode.ExtensionContext;
@@ -20,8 +20,8 @@ export class WebviewManager {
     }
 
     this.panel = vscode.window.createWebviewPanel(
-      'auth0Config',
-      'Auth0 Configuration',
+      'oauthConfig',
+      'OAuth Configuration',
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -65,7 +65,7 @@ export class WebviewManager {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auth0 Configuration</title>
+    <title>OAuth Token Generator Configuration</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -183,19 +183,31 @@ export class WebviewManager {
 </head>
 <body>
     <div class="container">
-        <h1>Auth0 Token Generator Configuration</h1>
-        
+        <h1>OAuth Token Generator Configuration</h1>
+
         <form id="credentialsForm">
             <div class="form-group">
                 <label for="environmentName">Environment Name:</label>
                 <input type="text" id="environmentName" placeholder="e.g., dev, staging, prod" required>
-                <div class="help-text">A friendly name to identify this Auth0 environment</div>
+                <div class="help-text">A friendly name to identify this environment</div>
             </div>
-            
+
             <div class="form-group">
-                <label for="domain">Auth0 Domain:</label>
-                <input type="text" id="domain" placeholder="your-tenant.auth0.com" required>
-                <div class="help-text">Your Auth0 tenant domain (without https://)</div>
+                <label for="provider">OAuth Provider:</label>
+                <select id="provider" required>
+                    <option value="">-- Select Provider --</option>
+                    <option value="Auth0">Auth0</option>
+                    <option value="Okta">Okta</option>
+                    <option value="Azure AD">Azure AD</option>
+                    <option value="Custom">Custom</option>
+                </select>
+                <div class="help-text">Select your OAuth provider</div>
+            </div>
+
+            <div class="form-group">
+                <label for="tokenEndpoint">Token Endpoint URL:</label>
+                <input type="text" id="tokenEndpoint" placeholder="https://your-domain.com/oauth/token" required>
+                <div class="help-text">Full URL to the OAuth token endpoint</div>
             </div>
             
             <div class="form-group">
@@ -211,7 +223,7 @@ export class WebviewManager {
             <div class="form-group">
                 <label for="audience">Audience (optional):</label>
                 <input type="text" id="audience" placeholder="e.g., https://api.example.com">
-                <div class="help-text">The API identifier for your Auth0 API</div>
+                <div class="help-text">The API identifier (if required by your provider)</div>
             </div>
             
             <div class="form-group">
@@ -235,10 +247,12 @@ export class WebviewManager {
         
         document.getElementById('credentialsForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
+
             const credentials = {
                 environmentName: document.getElementById('environmentName').value,
-                domain: document.getElementById('domain').value,
+                provider: document.getElementById('provider').value,
+                tokenEndpoint: document.getElementById('tokenEndpoint').value,
                 clientId: document.getElementById('clientId').value,
                 clientSecret: document.getElementById('clientSecret').value,
                 audience: document.getElementById('audience').value,
@@ -253,7 +267,8 @@ export class WebviewManager {
         
         document.getElementById('testBtn').addEventListener('click', () => {
             const credentials = {
-                domain: document.getElementById('domain').value,
+                provider: document.getElementById('provider').value,
+                tokenEndpoint: document.getElementById('tokenEndpoint').value,
                 clientId: document.getElementById('clientId').value,
                 clientSecret: document.getElementById('clientSecret').value,
                 audience: document.getElementById('audience').value,
@@ -312,7 +327,7 @@ export class WebviewManager {
                         <div class="environment-header">
                             <div>
                                 <div class="environment-name">\${env.name} \${isCurrent ? '(current)' : ''}</div>
-                                <div class="environment-domain">\${env.credentials.domain}</div>
+                                <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <button class="button secondary" onclick="deleteEnvironment('\${env.name}')">Delete</button>
                         </div>
@@ -328,8 +343,9 @@ export class WebviewManager {
 
   private async handleSaveCredentials(data: any): Promise<void> {
     try {
-      const credentials: Auth0Credentials = {
-        domain: data.domain,
+      const credentials: OAuthCredentials = {
+        provider: data.provider,
+        tokenEndpoint: data.tokenEndpoint,
         clientId: data.clientId,
         clientSecret: data.clientSecret,
         audience: data.audience || undefined,
@@ -362,16 +378,17 @@ export class WebviewManager {
 
   private async handleTestCredentials(data: any): Promise<void> {
     try {
-      const credentials: Auth0Credentials = {
-        domain: data.domain,
+      const credentials: OAuthCredentials = {
+        provider: data.provider,
+        tokenEndpoint: data.tokenEndpoint,
         clientId: data.clientId,
         clientSecret: data.clientSecret,
         audience: data.audience || undefined,
         scope: data.scope || undefined
       };
 
-      const auth0Client = new Auth0Client(credentials);
-      const isValid = await auth0Client.validateCredentials();
+      const oauthClient = new OAuthClient(credentials);
+      const isValid = await oauthClient.validateCredentials();
 
       if (isValid) {
         vscode.window.showInformationMessage('✓ Credentials are valid!');

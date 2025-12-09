@@ -1,8 +1,21 @@
 {
-  "name": "auth0-token-generator",
-  "displayName": "Auth0 Token Generator",
-  "description": "Generate bearer tokens for Auth0 clients directly from VS Code",
-  "publisher": "Hannah Redmond (hannah.redmond@keyloop.com)",
+  "name": "oauth-token-generator",
+  "displayName": "OAuth Token Generator",
+  "description": "Generate OAuth bearer tokens using client credentials flow directly from VS Code",
+  "publisher": "HannahRedmond",
+    "icon": "assets/avatar.png",
+  "galleryBanner": {
+    "color": "#000000",
+    "theme": "dark"
+  },
+   "repository": {
+    "type": "git",
+    "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension/issues"
+  },
+  "homepage": "https://github.com/hmredmond/oauth-token-generator-vscode-extension#readme",
   "version": "0.1.7",
   "engines": {
     "vscode": "^1.74.0"
@@ -11,50 +24,53 @@
     "Other"
   ],
   "keywords": [
-    "auth0",
+    "oauth",
+    "oauth2",
     "authentication",
     "bearer token",
-    "oauth",
-    "jwt"
+    "jwt",
+    "client credentials",
+    "token generator",
+    "auth0",
+    "okta",
+    "identity"
   ],
   "activationEvents": [
-    "onCommand:auth0-token-generator.generateToken",
-    "onCommand:auth0-token-generator.configureCredentials",
-    "onCommand:auth0-token-generator.selectEnvironment"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "auth0-token-generator.generateToken",
+        "command": "oauth-token-generator.generateToken",
         "title": "Generate Bearer Token",
-        "category": "Auth0"
+        "category": "OAuth"
       },
       {
-        "command": "auth0-token-generator.configureCredentials",
+        "command": "oauth-token-generator.configureCredentials",
         "title": "Configure Credentials",
-        "category": "Auth0"
+        "category": "OAuth"
       },
       {
-        "command": "auth0-token-generator.selectEnvironment",
+        "command": "oauth-token-generator.selectEnvironment",
         "title": "Select Environment",
-        "category": "Auth0"
+        "category": "OAuth"
       },
       {
-        "command": "auth0-token-generator.viewStoredTokens",
+        "command": "oauth-token-generator.viewStoredTokens",
         "title": "View Stored Tokens",
-        "category": "Auth0"
+        "category": "OAuth"
       }
     ],
     "configuration": {
-      "title": "Auth0 Token Generator",
+      "title": "OAuth Token Generator",
       "properties": {
-        "auth0TokenGenerator.defaultAudience": {
+        "oauthTokenGenerator.defaultAudience": {
           "type": "string",
           "default": "",
           "description": "Default audience for token requests"
         },
-        "auth0TokenGenerator.tokenExpiryWarning": {
+        "oauthTokenGenerator.tokenExpiryWarning": {
           "type": "number",
           "default": 300,
           "description": "Show warning when token expires in X seconds"

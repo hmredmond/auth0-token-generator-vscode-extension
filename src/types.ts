@@ -1,14 +1,15 @@
-export interface Auth0Credentials {
-  domain: string;
+export interface OAuthCredentials {
+  provider: string; // e.g., "Auth0", "Okta", "Custom"
+  tokenEndpoint: string; // Full URL to the token endpoint
   clientId: string;
   clientSecret: string;
   audience?: string;
   scope?: string;
 }
 
-export interface Auth0Environment {
+export interface OAuthEnvironment {
   name: string;
-  credentials: Auth0Credentials;
+  credentials: OAuthCredentials;
 }
 
 export interface TokenResponse {

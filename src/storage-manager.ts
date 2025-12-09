@@ -1,20 +1,20 @@
 import * as vscode from 'vscode';
-import { Auth0Environment, StoredToken } from './types';
+import { OAuthEnvironment, StoredToken } from './types';
 
 export class StorageManager {
   private context: vscode.ExtensionContext;
-  private static readonly ENVIRONMENTS_KEY = 'auth0.environments';
-  private static readonly CURRENT_ENV_KEY = 'auth0.currentEnvironment';
-  private static readonly TOKENS_KEY = 'auth0.storedTokens';
+  private static readonly ENVIRONMENTS_KEY = 'oauth.environments';
+  private static readonly CURRENT_ENV_KEY = 'oauth.currentEnvironment';
+  private static readonly TOKENS_KEY = 'oauth.storedTokens';
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
   }
 
-  async saveEnvironment(environment: Auth0Environment): Promise<void> {
+  async saveEnvironment(environment: OAuthEnvironment): Promise<void> {
     const environments = await this.getEnvironments();
     const existingIndex = environments.findIndex(env => env.name === environment.name);
-    
+
     if (existingIndex >= 0) {
       environments[existingIndex] = environment;
     } else {
@@ -32,9 +32,9 @@ export class StorageManager {
     await this.context.globalState.update(StorageManager.ENVIRONMENTS_KEY, envNames);
   }
 
-  async getEnvironments(): Promise<Auth0Environment[]> {
+  async getEnvironments(): Promise<OAuthEnvironment[]> {
     const envNames = this.context.globalState.get<string[]>(StorageManager.ENVIRONMENTS_KEY, []);
-    const environments: Auth0Environment[] = [];
+    const environments: OAuthEnvironment[] = [];
 
     for (const name of envNames) {
       const credentialsJson = await this.context.secrets.get(`${StorageManager.ENVIRONMENTS_KEY}.${name}`);
