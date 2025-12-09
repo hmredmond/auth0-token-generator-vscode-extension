@@ -3,12 +3,12 @@
   "displayName": "OAuth Token Generator",
   "description": "Generate OAuth bearer tokens using client credentials flow directly from VS Code",
   "publisher": "HannahRedmond",
-    "icon": "assets/avatar.png",
+  "icon": "assets/avatar.png",
   "galleryBanner": {
     "color": "#000000",
     "theme": "dark"
   },
-   "repository": {
+  "repository": {
     "type": "git",
     "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension"
   },
@@ -16,7 +16,7 @@
     "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension/issues"
   },
   "homepage": "https://github.com/hmredmond/oauth-token-generator-vscode-extension#readme",
-  "version": "0.1.7",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.74.0"
   },
