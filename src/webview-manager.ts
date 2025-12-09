@@ -126,6 +126,17 @@ export class WebviewManager {
         .button.secondary:hover {
             background-color: var(--vscode-button-secondaryHoverBackground);
         }
+        .button.icon {
+            padding: 6px 10px;
+            font-size: 16px;
+            min-width: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .button.icon:hover {
+            transform: scale(1.1);
+        }
         .environment-list {
             margin-top: 30px;
         }
@@ -432,12 +443,12 @@ export class WebviewManager {
             container.appendChild(headerRow);
         }
 
-        function removeHeader(headerId) {
+        window.removeHeader = function(headerId) {
             const element = document.getElementById(headerId);
             if (element) {
                 element.remove();
             }
-        }
+        };
 
         function getCustomHeaders() {
             const headerRows = document.querySelectorAll('.header-row');
@@ -455,13 +466,14 @@ export class WebviewManager {
             return headers;
         }
 
-        function editEnvironment(envName) {
+        // Make functions globally accessible for inline onclick handlers
+        window.editEnvironment = function(envName) {
             openModal('Edit Environment');
             vscode.postMessage({
                 type: 'loadEnvironment',
                 data: { name: envName }
             });
-        }
+        };
 
         document.getElementById('credentialsForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -507,22 +519,22 @@ export class WebviewManager {
         function loadEnvironments() {
             vscode.postMessage({ type: 'loadEnvironments' });
         }
-        
-        function deleteEnvironment(name) {
+
+        window.deleteEnvironment = function(name) {
             if (confirm('Are you sure you want to delete this environment?')) {
                 vscode.postMessage({
                     type: 'deleteEnvironment',
                     data: { name: name }
                 });
             }
-        }
+        };
 
-        function getToken(envName) {
+        window.getToken = function(envName) {
             vscode.postMessage({
                 type: 'getToken',
                 data: { name: envName }
             });
-        }
+        };
 
         // Load environments on page load
         loadEnvironments();
@@ -582,10 +594,10 @@ export class WebviewManager {
                                 <div class="environment-name">\${env.name} \${isCurrent ? '(current)' : ''}</div>
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="button" onclick="getToken('\${env.name}')">Get Token</button>
-                                <button class="button secondary" onclick="editEnvironment('\${env.name}')">Edit</button>
-                                <button class="button secondary" onclick="deleteEnvironment('\${env.name}')">Delete</button>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="button icon" onclick="getToken('\${env.name}')" title="Get Token">🔑</button>
+                                <button class="button secondary icon" onclick="editEnvironment('\${env.name}')" title="Edit">✏️</button>
+                                <button class="button secondary icon" onclick="deleteEnvironment('\${env.name}')" title="Delete">🗑️</button>
                             </div>
                         </div>
                     </div>
