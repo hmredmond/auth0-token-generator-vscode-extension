@@ -47,3 +47,4 @@ coverage/
 *.bak
 *.orig
 *.rej
+oauth-token-generator-*

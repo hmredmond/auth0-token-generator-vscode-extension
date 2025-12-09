@@ -7,10 +7,13 @@ A VS Code extension that generates bearer tokens for OAuth providers using the c
 - 🔐 **Secure Credential Storage**: Uses VS Code's built-in secure storage for OAuth credentials
 - 🌍 **Multi-Provider Support**: Configure Auth0, Okta, Azure AD, or custom OAuth providers
 - 🔄 **Multi-Environment Support**: Configure and switch between different environments (dev, staging, prod)
+- 🔑 **Multiple Auth Methods**: Supports both request body credentials and Basic Authentication headers
+- 🎯 **Custom Headers**: Add custom HTTP headers to token requests with environment variable support
 - ⚡ **Quick Token Generation**: Generate bearer tokens with a single command
 - 📋 **Clipboard Integration**: Automatically copies generated tokens to clipboard
 - 💾 **Token Caching**: Caches valid tokens to avoid unnecessary API calls
 - 📊 **Status Bar Integration**: Shows current environment and provides quick access
+- ✏️ **Easy Editing**: Edit existing configurations directly from the UI
 - 🧪 **Credential Testing**: Test your OAuth configuration before saving
 
 ## Getting Started
@@ -36,6 +39,11 @@ Install the extension in VS Code:
    - **Client Secret**: Your OAuth application's client secret
    - **Audience**: (Optional) The API identifier/resource for your OAuth API
    - **Scope**: (Optional) Space-separated list of scopes
+   - **Authentication Method**: Choose how credentials are sent:
+     - **Credentials in Request Body** (Default) - Standard OAuth 2.0 flow
+     - **Basic Authentication Header** - For providers requiring HTTP Basic Auth
+   - **Content Type**: Select request format (JSON or Form Encoded)
+   - **Custom Headers**: (Optional) Add custom HTTP headers with dynamic values
 
 #### Example Configurations
 
@@ -50,6 +58,15 @@ Install the extension in VS Code:
 **Azure AD:**
 - Token Endpoint: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token`
 - Scope: `https://graph.microsoft.com/.default`
+
+**Custom Provider with Basic Auth:**
+- Token Endpoint: `https://api.example.com/oauth2/token`
+- Authentication Method: `Basic Authentication Header`
+- Content Type: `Form Encoded`
+- Custom Headers:
+  - `X-EnterpriseId`: `your-enterprise-id`
+  - `X-StoreId`: `your-store-id`
+  - `X-Context`: `${TENANT_CONTEXT}` (uses environment variable)
 
 ### 3. Generate Bearer Tokens
 
@@ -79,6 +96,41 @@ Once configured, you can generate tokens using any of these methods:
 - All sensitive credentials are stored using VS Code's secure storage API
 - Tokens are cached locally but automatically removed when expired
 - No credentials are logged or transmitted except to your configured OAuth token endpoint
+
+## Advanced Features
+
+### Custom Headers with Environment Variables
+
+You can use environment variables in custom header values using the `${VARIABLE_NAME}` syntax:
+
+**Example:**
+- Header: `X-Context`
+- Value: `${TENANT_CONTEXT}`
+
+The extension will substitute `${TENANT_CONTEXT}` with the value from `process.env.TENANT_CONTEXT` at runtime.
+
+**Setting environment variables:**
+
+macOS/Linux:
+```bash
+export TENANT_CONTEXT="production"
+code  # Launch VS Code from terminal to inherit environment
+```
+
+Windows:
+```cmd
+set TENANT_CONTEXT=production
+code
+```
+
+### Editing Existing Configurations
+
+To edit an existing environment:
+1. Open `OAuth: Configure Credentials`
+2. Scroll to the "Configured Environments" section
+3. Click **Edit** on the environment you want to modify
+4. The form will populate with existing values
+5. Make your changes and click **Save Credentials**
 
 ## Configuration
 

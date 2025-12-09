@@ -43,6 +43,9 @@ export class WebviewManager {
           case 'loadEnvironments':
             await this.handleLoadEnvironments();
             break;
+          case 'loadEnvironment':
+            await this.handleLoadEnvironment(message.data.name);
+            break;
           case 'deleteEnvironment':
             await this.handleDeleteEnvironment(message.data.name);
             break;
@@ -179,6 +182,26 @@ export class WebviewManager {
             border-bottom: 1px solid var(--vscode-panel-border);
             padding-bottom: 8px;
         }
+        .header-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: flex-start;
+        }
+        .header-row input {
+            flex: 1;
+        }
+        .header-row .header-key {
+            min-width: 200px;
+        }
+        .header-row .header-value {
+            flex: 2;
+        }
+        .header-row .button {
+            margin: 0;
+            padding: 8px 12px;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -231,9 +254,33 @@ export class WebviewManager {
                 <input type="text" id="scope" placeholder="e.g., read:users write:users">
                 <div class="help-text">Space-separated list of scopes</div>
             </div>
-            
-            <button type="submit" class="button">Save Credentials</button>
-            <button type="button" class="button secondary" id="testBtn">Test Connection</button>
+
+            <div class="form-group">
+                <label for="authMethod">Authentication Method:</label>
+                <select id="authMethod" required>
+                    <option value="body">Credentials in Request Body (Default)</option>
+                    <option value="basic">Basic Authentication Header</option>
+                </select>
+                <div class="help-text">How to send client credentials to the OAuth provider</div>
+            </div>
+
+            <div class="form-group">
+                <label for="contentType">Content Type:</label>
+                <select id="contentType" required>
+                    <option value="application/json">JSON (application/json)</option>
+                    <option value="application/x-www-form-urlencoded">Form Encoded</option>
+                </select>
+                <div class="help-text">Request payload format</div>
+            </div>
+
+            <div class="section-title" style="margin-top: 24px;">Custom Headers (Optional)</div>
+            <div id="customHeadersContainer"></div>
+            <button type="button" class="button secondary" id="addHeaderBtn">+ Add Header</button>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" class="button">Save Credentials</button>
+                <button type="button" class="button secondary" id="testBtn">Test Connection</button>
+            </div>
         </form>
 
         <div class="section-title">Configured Environments</div>
@@ -244,10 +291,69 @@ export class WebviewManager {
 
     <script>
         const vscode = acquireVsCodeApi();
-        
+        let headerCounter = 0;
+
+        // Dynamic header management
+        document.getElementById('addHeaderBtn').addEventListener('click', () => {
+            addHeaderRow();
+        });
+
+        function addHeaderRow(key = '', value = '') {
+            const headerId = \`header-\${headerCounter++}\`;
+            const container = document.getElementById('customHeadersContainer');
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'header-row';
+            headerRow.id = headerId;
+            headerRow.innerHTML = \`
+                <input type="text"
+                       class="header-key"
+                       placeholder="Header name (e.g., X-Custom-Header)"
+                       value="\${key}">
+                <input type="text"
+                       class="header-value"
+                       placeholder="Header value (use \\\${ENV_VAR} for placeholders)"
+                       value="\${value}">
+                <button type="button" class="button secondary" onclick="removeHeader('\${headerId}')">
+                    Remove
+                </button>
+            \`;
+
+            container.appendChild(headerRow);
+        }
+
+        function removeHeader(headerId) {
+            const element = document.getElementById(headerId);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        function getCustomHeaders() {
+            const headerRows = document.querySelectorAll('.header-row');
+            const headers = [];
+
+            headerRows.forEach(row => {
+                const key = row.querySelector('.header-key').value.trim();
+                const value = row.querySelector('.header-value').value.trim();
+
+                if (key && value) {
+                    headers.push({ key, value });
+                }
+            });
+
+            return headers;
+        }
+
+        function editEnvironment(envName) {
+            vscode.postMessage({
+                type: 'loadEnvironment',
+                data: { name: envName }
+            });
+        }
+
         document.getElementById('credentialsForm').addEventListener('submit', (e) => {
             e.preventDefault();
-
 
             const credentials = {
                 environmentName: document.getElementById('environmentName').value,
@@ -256,15 +362,18 @@ export class WebviewManager {
                 clientId: document.getElementById('clientId').value,
                 clientSecret: document.getElementById('clientSecret').value,
                 audience: document.getElementById('audience').value,
-                scope: document.getElementById('scope').value
+                scope: document.getElementById('scope').value,
+                authMethod: document.getElementById('authMethod').value,
+                contentType: document.getElementById('contentType').value,
+                customHeaders: getCustomHeaders()
             };
-            
+
             vscode.postMessage({
                 type: 'saveCredentials',
                 data: credentials
             });
         });
-        
+
         document.getElementById('testBtn').addEventListener('click', () => {
             const credentials = {
                 provider: document.getElementById('provider').value,
@@ -272,9 +381,12 @@ export class WebviewManager {
                 clientId: document.getElementById('clientId').value,
                 clientSecret: document.getElementById('clientSecret').value,
                 audience: document.getElementById('audience').value,
-                scope: document.getElementById('scope').value
+                scope: document.getElementById('scope').value,
+                authMethod: document.getElementById('authMethod').value,
+                contentType: document.getElementById('contentType').value,
+                customHeaders: getCustomHeaders()
             };
-            
+
             vscode.postMessage({
                 type: 'testCredentials',
                 data: credentials
@@ -296,30 +408,57 @@ export class WebviewManager {
         
         // Load environments on page load
         loadEnvironments();
-        
+
         // Listen for messages from the extension
         window.addEventListener('message', event => {
             const message = event.data;
-            
+
             switch (message.type) {
                 case 'environmentsLoaded':
                     displayEnvironments(message.data.environments, message.data.currentEnv);
                     break;
                 case 'credentialsSaved':
                     document.getElementById('credentialsForm').reset();
+                    document.getElementById('customHeadersContainer').innerHTML = '';
+                    headerCounter = 0;
                     loadEnvironments();
+                    break;
+                case 'environmentLoaded':
+                    const env = message.data;
+
+                    // Populate form fields
+                    document.getElementById('environmentName').value = env.name;
+                    document.getElementById('provider').value = env.credentials.provider;
+                    document.getElementById('tokenEndpoint').value = env.credentials.tokenEndpoint;
+                    document.getElementById('clientId').value = env.credentials.clientId;
+                    document.getElementById('clientSecret').value = env.credentials.clientSecret;
+                    document.getElementById('audience').value = env.credentials.audience || '';
+                    document.getElementById('scope').value = env.credentials.scope || '';
+                    document.getElementById('authMethod').value = env.credentials.authMethod || 'body';
+                    document.getElementById('contentType').value = env.credentials.contentType || 'application/json';
+
+                    // Clear and populate custom headers
+                    document.getElementById('customHeadersContainer').innerHTML = '';
+                    headerCounter = 0;
+                    const headers = env.credentials.customHeaders || [];
+                    headers.forEach(header => {
+                        addHeaderRow(header.key, header.value);
+                    });
+
+                    // Scroll to top of form
+                    document.getElementById('credentialsForm').scrollIntoView({ behavior: 'smooth' });
                     break;
             }
         });
         
         function displayEnvironments(environments, currentEnv) {
             const container = document.getElementById('environmentsList');
-            
+
             if (environments.length === 0) {
                 container.innerHTML = '<p style="color: var(--vscode-descriptionForeground);">No environments configured yet.</p>';
                 return;
             }
-            
+
             container.innerHTML = environments.map(env => {
                 const isCurrent = env.name === currentEnv;
                 return \`
@@ -329,7 +468,10 @@ export class WebviewManager {
                                 <div class="environment-name">\${env.name} \${isCurrent ? '(current)' : ''}</div>
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
-                            <button class="button secondary" onclick="deleteEnvironment('\${env.name}')">Delete</button>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="button secondary" onclick="editEnvironment('\${env.name}')">Edit</button>
+                                <button class="button secondary" onclick="deleteEnvironment('\${env.name}')">Delete</button>
+                            </div>
                         </div>
                     </div>
                 \`;
@@ -349,7 +491,10 @@ export class WebviewManager {
         clientId: data.clientId,
         clientSecret: data.clientSecret,
         audience: data.audience || undefined,
-        scope: data.scope || undefined
+        scope: data.scope || undefined,
+        authMethod: data.authMethod || 'body',
+        contentType: data.contentType || 'application/json',
+        customHeaders: data.customHeaders || []
       };
 
       await this.storageManager.saveEnvironment({
@@ -360,7 +505,7 @@ export class WebviewManager {
       // Set as current environment if it's the first one
       const environments = await this.storageManager.getEnvironments();
       const currentEnv = await this.storageManager.getCurrentEnvironment();
-      
+
       if (!currentEnv && environments.length === 1) {
         await this.storageManager.setCurrentEnvironment(data.environmentName);
       }
@@ -384,7 +529,10 @@ export class WebviewManager {
         clientId: data.clientId,
         clientSecret: data.clientSecret,
         audience: data.audience || undefined,
-        scope: data.scope || undefined
+        scope: data.scope || undefined,
+        authMethod: data.authMethod || 'body',
+        contentType: data.contentType || 'application/json',
+        customHeaders: data.customHeaders || []
       };
 
       const oauthClient = new OAuthClient(credentials);
@@ -404,7 +552,7 @@ export class WebviewManager {
   private async handleLoadEnvironments(): Promise<void> {
     const environments = await this.storageManager.getEnvironments();
     const currentEnv = await this.storageManager.getCurrentEnvironment();
-    
+
     this.panel?.webview.postMessage({
       type: 'environmentsLoaded',
       data: {
@@ -412,6 +560,25 @@ export class WebviewManager {
         currentEnv
       }
     });
+  }
+
+  private async handleLoadEnvironment(envName: string): Promise<void> {
+    try {
+      const environments = await this.storageManager.getEnvironments();
+      const environment = environments.find(env => env.name === envName);
+
+      if (environment) {
+        this.panel?.webview.postMessage({
+          type: 'environmentLoaded',
+          data: environment
+        });
+      } else {
+        vscode.window.showErrorMessage(`Environment '${envName}' not found`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to load environment: ${errorMessage}`);
+    }
   }
 
   private async handleDeleteEnvironment(name: string): Promise<void> {
