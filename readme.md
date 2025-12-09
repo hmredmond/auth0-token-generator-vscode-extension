@@ -2,6 +2,8 @@
 
 A VS Code extension that generates bearer tokens for OAuth providers using the client credentials flow. Supports Auth0, Okta, Azure AD, and any custom OAuth provider.
 
+**👉 [Complete Getting Started Guide](GETTING_STARTED.md)** - Step-by-step walkthrough with examples
+
 ## Features
 
 - 🔐 **Secure Credential Storage**: Uses VS Code's built-in secure storage for OAuth credentials
@@ -13,10 +15,13 @@ A VS Code extension that generates bearer tokens for OAuth providers using the c
 - 📋 **Clipboard Integration**: Automatically copies generated tokens to clipboard
 - 💾 **Token Caching**: Caches valid tokens to avoid unnecessary API calls
 - 📊 **Status Bar Integration**: Shows current environment and provides quick access
-- ✏️ **Easy Editing**: Edit existing configurations directly from the UI
+- ✏️ **Easy Management**: Edit, delete, and manage configurations with intuitive icon buttons
 - 🧪 **Credential Testing**: Test your OAuth configuration before saving
+- 🎨 **Clean UI**: Modern interface with icon-based actions for better space efficiency
 
 ## Getting Started
+
+📚 **New to this extension?** Check out our [comprehensive Getting Started guide](GETTING_STARTED.md) with step-by-step examples and sample configurations!
 
 ### 1. Install the Extension
 
@@ -123,14 +128,27 @@ set TENANT_CONTEXT=production
 code
 ```
 
-### Editing Existing Configurations
+### Managing Existing Configurations
 
-To edit an existing environment:
+The configuration panel provides easy management of all your OAuth environments:
+
+**To edit an environment:**
 1. Open `OAuth: Configure Credentials`
 2. Scroll to the "Configured Environments" section
-3. Click **Edit** on the environment you want to modify
+3. Click the **✎ (Edit)** icon button on the environment you want to modify
 4. The form will populate with existing values
 5. Make your changes and click **Save Credentials**
+
+**To delete an environment:**
+1. Open `OAuth: Configure Credentials`
+2. Scroll to the "Configured Environments" section
+3. Click the **× (Delete)** icon button on the environment
+4. Confirm the deletion when prompted
+
+**To generate a token for a specific environment:**
+1. Open `OAuth: Configure Credentials`
+2. Click the **↻ (Get Token)** icon button next to any environment
+3. The token will be generated and copied to your clipboard
 
 ## Configuration
 
@@ -167,9 +185,15 @@ This extension supports any OAuth 2.0 provider that implements the client creden
 - **Azure AD** - Microsoft Azure Active Directory
 - **Custom** - Any OAuth 2.0 compliant provider
 
-## Changelog
+## Recent Updates (v1.9.0)
 
-See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes and version history.
+- ✨ Improved configuration UI with compact icon buttons
+- 🗑️ Added ability to delete environments directly from the configuration panel
+- 🎯 Enhanced button interactions with custom confirmation dialogs
+- 🐛 Fixed environment deletion and list refresh functionality
+- 💅 Cleaner, more modern interface design
+
+See [CHANGELOG.md](CHANGELOG.md) for a complete version history.
 
 ## License
 
