@@ -595,9 +595,9 @@ export class WebviewManager {
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <button class="button icon" onclick="getToken('\${env.name}')" title="Get Token">🔑</button>
-                                <button class="button secondary icon" onclick="editEnvironment('\${env.name}')" title="Edit">✏️</button>
-                                <button class="button secondary icon" onclick="deleteEnvironment('\${env.name}')" title="Delete">🗑️</button>
+                                <button class="button secondary icon" onclick="getToken('\${env.name}')" title="Get Token">↻</button>
+                                <button class="button secondary icon" onclick="editEnvironment('\${env.name}')" title="Edit">✎</button>
+                                <button class="button secondary icon" onclick="deleteEnvironment('\${env.name}')" title="Delete">×</button>
                             </div>
                         </div>
                     </div>
