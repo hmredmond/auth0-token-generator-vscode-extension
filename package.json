@@ -60,8 +60,45 @@
         "command": "oauth-token-generator.viewStoredTokens",
         "title": "View Stored Tokens",
         "category": "OAuth"
+      },
+      {
+        "command": "oauth-token-generator.refreshEnvironments",
+        "title": "Refresh Environments",
+        "category": "OAuth",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "oauth-token-generator.refreshTokens",
+        "title": "Refresh Tokens",
+        "category": "OAuth",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "oauth-token-generator.openConfigFromTree",
+        "title": "Configure Credentials",
+        "category": "OAuth",
+        "icon": "$(add)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "oauth-token-generator.refreshEnvironments",
+          "when": "view == auth0Environments",
+          "group": "navigation"
+        },
+        {
+          "command": "oauth-token-generator.openConfigFromTree",
+          "when": "view == auth0Environments",
+          "group": "navigation"
+        },
+        {
+          "command": "oauth-token-generator.refreshTokens",
+          "when": "view == auth0Tokens",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "OAuth Token Generator",
       "properties": {
@@ -76,6 +113,31 @@
           "description": "Show warning when token expires in X seconds"
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "auth0-token-generator",
+          "title": "Auth0 Token Generator",
+          "icon": "$(key)"
+        }
+      ]
+    },
+    "views": {
+      "auth0-token-generator": [
+        {
+          "id": "auth0Environments",
+          "name": "Environments",
+          "icon": "$(server-environment)",
+          "contextualTitle": "Auth0 Environments"
+        },
+        {
+          "id": "auth0Tokens",
+          "name": "Generated Tokens",
+          "icon": "$(lock)",
+          "contextualTitle": "Auth0 Tokens"
+        }
+      ]
     }
   },
   "scripts": {

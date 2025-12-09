@@ -9,15 +9,17 @@ A VS Code extension that generates bearer tokens for OAuth providers using the c
 - 🔐 **Secure Credential Storage**: Uses VS Code's built-in secure storage for OAuth credentials
 - 🌍 **Multi-Provider Support**: Configure Auth0, Okta, Azure AD, or custom OAuth providers
 - 🔄 **Multi-Environment Support**: Configure and switch between different environments (dev, staging, prod)
+- 📱 **Sidebar Panel Integration**: View and manage environments and tokens from the left-hand activity bar
+- 🎨 **Responsive Design**: UI adapts seamlessly to narrow panels and different screen sizes
 - 🔑 **Multiple Auth Methods**: Supports both request body credentials and Basic Authentication headers
 - 🎯 **Custom Headers**: Add custom HTTP headers to token requests with environment variable support
-- ⚡ **Quick Token Generation**: Generate bearer tokens with a single command
+- ⚡ **Quick Token Generation**: Generate bearer tokens with a single command or from the sidebar
 - 📋 **Clipboard Integration**: Automatically copies generated tokens to clipboard
 - 💾 **Token Caching**: Caches valid tokens to avoid unnecessary API calls
 - 📊 **Status Bar Integration**: Shows current environment and provides quick access
 - ✏️ **Easy Management**: Edit, delete, and manage configurations with intuitive icon buttons
 - 🧪 **Credential Testing**: Test your OAuth configuration before saving
-- 🎨 **Clean UI**: Modern interface with icon-based actions for better space efficiency
+- 🌳 **Tree View**: Visual organization of environments and tokens in the sidebar
 
 ## Getting Started
 
@@ -73,10 +75,33 @@ Install the extension in VS Code:
   - `X-StoreId`: `your-store-id`
   - `X-Context`: `${TENANT_CONTEXT}` (uses environment variable)
 
-### 3. Generate Bearer Tokens
+### 3. Using the Sidebar Panel
+
+The extension adds a sidebar panel to the left-hand activity bar where you can:
+
+- **View all configured environments** - See your dev, staging, and prod configurations at a glance
+- **View cached tokens** - Check which tokens are stored and when they expire
+- **Generate tokens quickly** - Click any environment to generate a token instantly
+- **Refresh views** - Update the lists with the refresh button
+
+**To access the sidebar:**
+1. Look for the key icon (🔑) in the left-hand activity bar
+2. Click it to open the OAuth Token Generator panel
+3. You'll see two sections:
+   - **Environments**: All your configured OAuth environments
+   - **Generated Tokens**: Currently cached tokens with expiry times
+
+**Working with the sidebar:**
+- Click any environment to generate a token and copy it to your clipboard
+- Click any cached token to copy it without making a new API call
+- Use the refresh button (🔄) to update the views
+- Use the add button (➕) to configure new credentials
+
+### 4. Generate Bearer Tokens
 
 Once configured, you can generate tokens using any of these methods:
 
+- **Sidebar Panel**: Click any environment in the OAuth sidebar panel (fastest!)
 - **Command Palette**: Run `OAuth: Generate Bearer Token`
 - **Status Bar**: Click on the OAuth status item in the bottom-right
 - **Keyboard Shortcut**: Assign a custom shortcut to the generate token command
@@ -89,6 +114,8 @@ Once configured, you can generate tokens using any of these methods:
 | `OAuth: Configure Credentials` | Opens the configuration panel to manage OAuth credentials |
 | `OAuth: Select Environment` | Switch between configured OAuth environments |
 | `OAuth: View Stored Tokens` | View and copy previously generated tokens |
+| `OAuth: Refresh Environments` | Refreshes the environments tree view in the sidebar |
+| `OAuth: Refresh Tokens` | Refreshes the tokens tree view in the sidebar |
 
 ## Requirements
 
@@ -185,8 +212,17 @@ This extension supports any OAuth 2.0 provider that implements the client creden
 - **Azure AD** - Microsoft Azure Active Directory
 - **Custom** - Any OAuth 2.0 compliant provider
 
-## Recent Updates (v1.9.0)
+## Recent Updates (v2.0.0)
 
+- 🌳 **NEW**: Sidebar panel with tree views for environments and tokens
+- 📱 **NEW**: Responsive design that adapts to narrow panels and different screen sizes
+- ⚡ **NEW**: One-click token generation from the sidebar
+- 🔄 **NEW**: Real-time view of cached tokens with expiry times
+- 📊 **NEW**: Visual organization of environments with current environment highlighting
+- 🎨 Improved webview responsiveness with media queries
+- ✨ Enhanced user experience with sidebar integration
+
+**Previous Updates (v1.9.0)**
 - ✨ Improved configuration UI with compact icon buttons
 - 🗑️ Added ability to delete environments directly from the configuration panel
 - 🎯 Enhanced button interactions with custom confirmation dialogs

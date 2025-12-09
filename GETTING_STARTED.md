@@ -90,33 +90,87 @@ Now you have two environments configured!
 
 ---
 
+## Using the Sidebar Panel (NEW!)
+
+### The Fastest Way to Work with Tokens
+
+The extension now includes a dedicated sidebar panel for quick access to environments and tokens.
+
+**Opening the Sidebar:**
+1. Look for the **key icon (🔑)** in the left-hand activity bar
+2. Click it to open the OAuth Token Generator panel
+
+**What you'll see:**
+
+**📁 Environments Section**
+- Lists all your configured OAuth environments
+- Current environment is highlighted with a green icon
+- Click any environment to instantly generate a token
+- Use the ➕ button to add new credentials
+- Use the 🔄 button to refresh the list
+
+**🔐 Generated Tokens Section**
+- Shows all cached tokens
+- Displays expiry time for each token (e.g., "Expires in 25m")
+- Click any token to copy it to clipboard
+- Automatically updates as tokens expire
+- Use the 🔄 button to refresh the list
+
+**Example Workflow:**
+```
+1. Open sidebar (click 🔑 icon)
+2. See all environments at a glance
+3. Click "Development" → Token generated and copied!
+4. Switch to "Staging" → Click it → New token copied!
+5. Check cached tokens in the "Generated Tokens" section
+```
+
+**Why use the sidebar?**
+- ✓ Visual overview of all environments
+- ✓ One-click token generation (no command palette needed)
+- ✓ See token expiry times at a glance
+- ✓ Works great in narrow panels (responsive design)
+- ✓ Always accessible from the activity bar
+
+---
+
 ## Generating Tokens
 
-### Method 1: Quick Generate (Recommended for daily use)
+### Method 1: Sidebar Panel (NEW - Recommended!)
 
-**When to use:** You need a token right now for the current environment
+**When to use:** Quick daily token generation (fastest method!)
+
+1. Click the **🔑** icon in the left activity bar
+2. Click any environment in the "Environments" list
+3. Token is generated and copied to clipboard
+4. Paste it wherever you need (Postman, curl, etc.)
+
+**Pro tip:** Keep the sidebar open while developing!
+
+### Method 2: Quick Generate from Command Palette
+
+**When to use:** You want to use keyboard shortcuts or the current environment
 
 1. Press `Ctrl+Shift+P` / `Cmd+Shift+P`
 2. Type: `OAuth: Generate Bearer Token`
 3. Press Enter
 4. Token is generated and copied to clipboard
-5. Paste it wherever you need (Postman, curl, etc.)
 
 **Pro tip:** Assign a keyboard shortcut for even faster access!
 - Go to: File > Preferences > Keyboard Shortcuts
 - Search for: `OAuth: Generate Bearer Token`
 - Assign something like `Ctrl+Alt+T`
 
-### Method 2: Generate from Configuration Panel
+### Method 3: Generate from Configuration Panel
 
-**When to use:** You want to generate a token for a specific environment without switching
+**When to use:** You're already in the configuration panel editing credentials
 
 1. Open `OAuth: Configure Credentials`
 2. Find the environment you want
 3. Click the **↻** (Get Token) icon button
 4. Token is generated and copied to clipboard
 
-### Method 3: Status Bar (Quick Switch & Generate)
+### Method 4: Status Bar (Quick Switch & Generate)
 
 **When to use:** You frequently switch between environments
 
@@ -355,7 +409,47 @@ Audience: https://api-staging.mycompany.com
 
 ## Complete Workflow Example
 
-### Daily Development Workflow
+### Daily Development Workflow (Using Sidebar - Recommended!)
+
+**Morning Setup:**
+```
+1. Open VS Code
+2. Click the 🔑 icon in the left activity bar
+3. Click "Development" in the Environments list
+4. Token copied to clipboard
+5. Paste into Postman/curl for testing
+```
+
+**Testing Different Environments:**
+```
+1. Testing dev API endpoint ✓
+2. Need to test staging now...
+3. Look at sidebar (already open)
+4. Click "Staging" environment
+5. Token generated and copied instantly ✓
+6. Test staging endpoint ✓
+```
+
+**Checking Cached Tokens:**
+```
+1. Look at "Generated Tokens" section in sidebar
+2. See all cached tokens with expiry times
+3. Click any token to copy it (no new API call needed)
+4. Expired tokens are automatically removed
+```
+
+**Switching Between Projects:**
+```
+Project A (Uses Auth0):
+- Sidebar shows: "Project A - Dev" (highlighted in green)
+- Click it → Token generated → Test endpoints
+
+Project B (Uses Okta):
+- Sidebar shows: "Project B - Dev"
+- Click it → Token generated → Test endpoints
+```
+
+### Alternative Workflow (Using Command Palette)
 
 **Morning Setup:**
 ```
@@ -375,17 +469,6 @@ Audience: https://api-staging.mycompany.com
 5. Choose "Staging"
 6. Run: OAuth: Generate Bearer Token
 7. Test staging endpoint ✓
-```
-
-**Switching Between Projects:**
-```
-Project A (Uses Auth0):
-- Current Environment: "Project A - Dev"
-- Generate token → Test endpoints
-
-Project B (Uses Okta):
-- Switch to: "Project B - Dev"
-- Generate token → Test endpoints
 ```
 
 ---

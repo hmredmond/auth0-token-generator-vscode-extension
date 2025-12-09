@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-12-09
+
+### Added - Major UI Enhancement with Sidebar Integration
+
+This major release introduces a completely new way to interact with the extension through a dedicated sidebar panel with tree views.
+
+#### New Features
+
+- **🌳 Sidebar Panel Integration**
+  - Dedicated OAuth Token Generator panel in the activity bar (left-hand sidebar)
+  - Visual tree views for environments and tokens
+  - One-click access from the key icon (🔑) in the activity bar
+
+- **📁 Environments Tree View**
+  - Lists all configured OAuth environments in a visual tree structure
+  - Current environment highlighted with green icon
+  - Click any environment to instantly generate and copy a token
+  - Environment metadata displayed (provider and token endpoint)
+  - Quick access buttons: refresh (🔄) and add new environment (➕)
+
+- **🔐 Generated Tokens Tree View**
+  - Real-time view of all cached tokens
+  - Expiry time displayed for each token (e.g., "Expires in 25m")
+  - Click any token to copy it to clipboard without making a new API call
+  - Automatically refreshes when tokens expire
+  - Color-coded icons for visual distinction
+
+- **📱 Responsive Design**
+  - Webview configuration panel now fully responsive
+  - Media queries adapt UI to narrow panels (< 600px)
+  - Optimized for sidebar usage and different screen sizes
+  - Form elements stack vertically on narrow screens
+  - Button sizes and spacing adjust for better usability
+
+#### Changed
+
+- **Enhanced User Experience**
+  - Token generation now possible from three locations: sidebar, command palette, and configuration panel
+  - Tree views automatically refresh after token generation or environment changes
+  - Visual feedback with icons indicating current environment and token status
+  - Improved workflow efficiency with always-visible environment list
+
+- **Architecture Improvements**
+  - Added `tree-providers.ts` with `EnvironmentsTreeProvider` and `TokensTreeProvider`
+  - Extended `CommandManager` with tree view refresh callbacks
+  - New commands: `refreshEnvironments`, `refreshTokens`, `generateTokenFromTree`, `copyTokenFromTree`
+  - Context menu integration for tree views
+
+#### Technical Details
+
+- **New Files**:
+  - `src/tree-providers.ts`: Tree view data providers and tree item classes
+
+- **Updated Files**:
+  - `src/extension.ts`: Tree view registration and command wiring
+  - `src/commands.ts`: Tree view refresh callbacks integration
+  - `src/webview-manager.ts`: Responsive CSS media queries
+  - `package.json`: View containers, views, and menu contributions
+
+- **Package.json Changes**:
+  - Added `viewsContainers.activitybar` configuration with `auth0-token-generator` container
+  - Added two views: `auth0Environments` and `auth0Tokens`
+  - Added commands: `refreshEnvironments`, `refreshTokens`, `openConfigFromTree`
+  - Added `menus.view/title` contributions for tree view toolbar buttons
+
+- **CSS Enhancements**:
+  - Media query for screens < 600px (sidebar and narrow panels)
+  - Media query for screens < 400px (very narrow panels)
+  - Responsive form layouts with flexbox
+  - Adaptive button sizing and spacing
+
+#### Benefits
+
+- **Faster Workflow**: Generate tokens with a single click instead of multiple steps
+- **Better Visibility**: See all environments and tokens at a glance
+- **Improved Organization**: Visual tree structure makes it easy to manage multiple environments
+- **Enhanced UX**: Responsive design works seamlessly in any panel configuration
+- **Always Accessible**: Sidebar remains visible while working in editor
+
+#### Migration Notes
+
+No breaking changes. All existing configurations and workflows continue to work as before. The sidebar panel is an additional feature that enhances the existing functionality.
+
 ## [0.2.0] - 2025-12-09
 
 ### Changed - Major Refactor to Generic OAuth Support

@@ -296,6 +296,86 @@ export class WebviewManager {
             align-items: center;
             margin-bottom: 16px;
         }
+
+        /* Responsive styles for narrow panels */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .modal-content {
+                padding: 16px;
+                max-width: 100%;
+            }
+
+            .header-row {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .header-row .header-key,
+            .header-row .header-value {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .header-row .button {
+                width: 100%;
+            }
+
+            .button {
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+
+            .environment-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .environment-header > div:last-child {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .environments-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .environments-header .section-title {
+                margin: 0;
+            }
+
+            .environments-header .button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .form-group {
+                margin-bottom: 16px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .section-title {
+                font-size: 1.1em;
+            }
+        }
     </style>
 </head>
 <body>

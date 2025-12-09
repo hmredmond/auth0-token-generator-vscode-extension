@@ -7,10 +7,15 @@ import { OAuthCredentials, StoredToken, OAuthEnvironment } from './types';
 export class CommandManager {
   private storageManager: StorageManager;
   private webviewManager: WebviewManager;
+  private onTreeViewRefreshCallback?: () => void;
 
   constructor(context: vscode.ExtensionContext) {
     this.storageManager = new StorageManager(context);
     this.webviewManager = new WebviewManager(context);
+  }
+
+  setTreeViewRefreshCallback(callback: () => void): void {
+    this.onTreeViewRefreshCallback = callback;
   }
 
   async generateToken(): Promise<void> {
@@ -101,6 +106,11 @@ export class CommandManager {
         );
       });
 
+      // Refresh tree views
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       vscode.window.showErrorMessage(`Failed to generate token: ${errorMessage}`);
@@ -138,6 +148,11 @@ export class CommandManager {
     if (selected) {
       await this.storageManager.setCurrentEnvironment(selected.label);
       vscode.window.showInformationMessage(`✓ Environment switched to: ${selected.label}`);
+
+      // Refresh tree views
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
     }
   }
 

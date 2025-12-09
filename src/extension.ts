@@ -1,16 +1,43 @@
 import * as vscode from 'vscode';
 import { CommandManager } from './commands';
 import { StatusBarManager } from './status-bar';
+import { StorageManager } from './storage-manager';
+import { EnvironmentsTreeProvider, TokensTreeProvider } from './tree-providers';
+import { OAuthEnvironment, StoredToken } from './types';
 
 let commandManager: CommandManager;
 let statusBarManager: StatusBarManager;
+let environmentsTreeProvider: EnvironmentsTreeProvider;
+let tokensTreeProvider: TokensTreeProvider;
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('OAuth Token Generator extension is now active!');
 
   // Initialize managers
+  const storageManager = new StorageManager(context);
   commandManager = new CommandManager(context);
   statusBarManager = new StatusBarManager(context);
+
+  // Initialize tree view providers
+  environmentsTreeProvider = new EnvironmentsTreeProvider(storageManager);
+  tokensTreeProvider = new TokensTreeProvider(storageManager);
+
+  // Set up refresh callback for command manager
+  commandManager.setTreeViewRefreshCallback(() => {
+    environmentsTreeProvider.refresh();
+    tokensTreeProvider.refresh();
+  });
+
+  // Register tree views
+  const environmentsTreeView = vscode.window.createTreeView('auth0Environments', {
+    treeDataProvider: environmentsTreeProvider,
+    showCollapseAll: false
+  });
+
+  const tokensTreeView = vscode.window.createTreeView('auth0Tokens', {
+    treeDataProvider: tokensTreeProvider,
+    showCollapseAll: false
+  });
 
   // Register commands
   const generateTokenCommand = vscode.commands.registerCommand(
@@ -33,6 +60,45 @@ export function activate(context: vscode.ExtensionContext) {
     () => commandManager.viewStoredTokens()
   );
 
+  // Register tree view commands
+  const generateTokenFromTreeCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.generateTokenFromTree',
+    async (environment: OAuthEnvironment) => {
+      if (environment) {
+        await storageManager.setCurrentEnvironment(environment.name);
+        await commandManager.generateToken();
+        environmentsTreeProvider.refresh();
+        tokensTreeProvider.refresh();
+      }
+    }
+  );
+
+  const copyTokenFromTreeCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.copyTokenFromTree',
+    async (token: StoredToken) => {
+      if (token) {
+        await vscode.env.clipboard.writeText(token.token);
+        const expiresIn = Math.round((token.expiresAt - Date.now()) / 1000);
+        vscode.window.showInformationMessage(`✓ Token copied to clipboard! (expires in ${expiresIn}s)`);
+      }
+    }
+  );
+
+  const refreshEnvironmentsCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.refreshEnvironments',
+    () => environmentsTreeProvider.refresh()
+  );
+
+  const refreshTokensCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.refreshTokens',
+    () => tokensTreeProvider.refresh()
+  );
+
+  const openConfigFromTreeCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.openConfigFromTree',
+    () => commandManager.configureCredentials()
+  );
+
   // Register event listeners
   const onConfigurationChanged = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('oauthTokenGenerator')) {
@@ -46,6 +112,13 @@ export function activate(context: vscode.ExtensionContext) {
     configureCredentialsCommand,
     selectEnvironmentCommand,
     viewStoredTokensCommand,
+    generateTokenFromTreeCommand,
+    copyTokenFromTreeCommand,
+    refreshEnvironmentsCommand,
+    refreshTokensCommand,
+    openConfigFromTreeCommand,
+    environmentsTreeView,
+    tokensTreeView,
     onConfigurationChanged
   );
 
