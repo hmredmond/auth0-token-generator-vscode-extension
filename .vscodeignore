@@ -1,6 +1,5 @@
 assets/
 !assets/avatar.png
-build/
 .vscode/**
 .vscode-test/**
 src/**
