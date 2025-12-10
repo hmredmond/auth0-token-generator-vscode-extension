@@ -553,15 +553,15 @@ export class WebviewManager {
             </div>
 
             <div class="form-group">
-                <label for="clientId">Client ID:</label>
+                <label for="clientId" id="clientIdLabel">Client ID:</label>
                 <input type="text" id="clientId" placeholder="Your client ID or \${CLIENT_ID}" required>
-                <div class="help-text">OAuth application client ID (supports \${ENV_VAR} syntax)</div>
+                <div class="help-text" id="clientIdHelp">OAuth application client ID (supports \${ENV_VAR} syntax)</div>
             </div>
 
             <div class="form-group">
-                <label for="clientSecret">Client Secret:</label>
+                <label for="clientSecret" id="clientSecretLabel">Client Secret:</label>
                 <input type="password" id="clientSecret" placeholder="Your client secret or \${CLIENT_SECRET}" required>
-                <div class="help-text">OAuth application client secret (supports \${ENV_VAR} syntax)</div>
+                <div class="help-text" id="clientSecretHelp">OAuth application client secret (supports \${ENV_VAR} syntax)</div>
             </div>
 
             <div class="form-group">
@@ -747,6 +747,41 @@ export class WebviewManager {
         //         closeModalFn();
         //     }
         // });
+
+        // Dynamic label updates based on auth method
+        const authMethodSelect = document.getElementById('authMethod');
+        const clientIdLabel = document.getElementById('clientIdLabel');
+        const clientSecretLabel = document.getElementById('clientSecretLabel');
+        const clientIdHelp = document.getElementById('clientIdHelp');
+        const clientSecretHelp = document.getElementById('clientSecretHelp');
+        const clientIdInput = document.getElementById('clientId');
+        const clientSecretInput = document.getElementById('clientSecret');
+
+        function updateFieldLabels() {
+            const isBasicAuth = authMethodSelect.value === 'basic';
+
+            if (isBasicAuth) {
+                clientIdLabel.textContent = 'Username:';
+                clientSecretLabel.textContent = 'Password:';
+                clientIdHelp.textContent = 'Username for Basic Authentication (supports \${ENV_VAR} syntax)';
+                clientSecretHelp.textContent = 'Password for Basic Authentication (supports \${ENV_VAR} syntax)';
+                clientIdInput.placeholder = 'Your username or \${USERNAME}';
+                clientSecretInput.placeholder = 'Your password or \${PASSWORD}';
+            } else {
+                clientIdLabel.textContent = 'Client ID:';
+                clientSecretLabel.textContent = 'Client Secret:';
+                clientIdHelp.textContent = 'OAuth application client ID (supports \${ENV_VAR} syntax)';
+                clientSecretHelp.textContent = 'OAuth application client secret (supports \${ENV_VAR} syntax)';
+                clientIdInput.placeholder = 'Your client ID or \${CLIENT_ID}';
+                clientSecretInput.placeholder = 'Your client secret or \${CLIENT_SECRET}';
+            }
+        }
+
+        // Update labels when auth method changes
+        authMethodSelect.addEventListener('change', updateFieldLabels);
+
+        // Update labels on initial load based on current selection
+        updateFieldLabels();
 
         // Dynamic header management
         document.getElementById('addHeaderBtn').addEventListener('click', () => {
@@ -945,6 +980,9 @@ export class WebviewManager {
                     headers.forEach(header => {
                         addHeaderRow(header.key, header.value);
                     });
+
+                    // Update field labels based on auth method
+                    updateFieldLabels();
 
                     // Open the modal with edit title
                     openModal('Edit Environment');
@@ -1270,6 +1308,11 @@ export class WebviewManager {
 
       // Reload the environments list in the webview
       await this.handleLoadEnvironments();
+
+      // Refresh tree views in the sidebar
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       vscode.window.showErrorMessage(`Failed to import environments: ${errorMessage}`);

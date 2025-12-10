@@ -49,6 +49,7 @@ Install the extension in VS Code:
    - **Authentication Method**: Choose how credentials are sent:
      - **Credentials in Request Body** (Default) - Standard OAuth 2.0 flow
      - **Basic Authentication Header** - For providers requiring HTTP Basic Auth
+       - *Note: When Basic Auth is selected, the form fields automatically rename to "Username" and "Password" to better reflect their usage*
    - **Content Type**: Select request format (JSON or Form Encoded)
    - **Custom Headers**: (Optional) Add custom HTTP headers with dynamic values
 
@@ -139,6 +140,27 @@ Once configured, you can generate tokens using any of these methods:
 - No credentials are logged or transmitted except to your configured OAuth token endpoint
 
 ## Advanced Features
+
+### Authentication Methods
+
+The extension supports two authentication methods for OAuth token requests:
+
+**1. Credentials in Request Body (Default)**
+- Standard OAuth 2.0 client credentials flow
+- Sends `client_id` and `client_secret` in the request body
+- Most common method used by providers like Auth0, Okta, and Azure AD
+
+**2. Basic Authentication Header**
+- Encodes credentials as HTTP Basic Authentication
+- Sends credentials in the `Authorization: Basic <base64>` header
+- Required by some custom OAuth providers
+
+**Dynamic Form Labels:**
+When you select "Basic Authentication Header" as the authentication method, the form automatically updates the field labels:
+- "Client ID" → "Username"
+- "Client Secret" → "Password"
+
+This helps clarify that in Basic Auth mode, these fields represent the username and password credentials rather than OAuth client credentials. The underlying functionality remains the same - the values are Base64-encoded and sent in the Authorization header.
 
 ### Environment Variables Support
 
