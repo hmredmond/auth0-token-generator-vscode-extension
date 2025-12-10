@@ -16,6 +16,8 @@ export class CommandManager {
 
   setTreeViewRefreshCallback(callback: () => void): void {
     this.onTreeViewRefreshCallback = callback;
+    // Also set the callback for the webview manager
+    this.webviewManager.setTreeViewRefreshCallback(callback);
   }
 
   async generateToken(): Promise<void> {

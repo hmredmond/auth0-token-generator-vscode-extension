@@ -16,7 +16,7 @@
     "url": "https://github.com/hmredmond/auth0-token-generator-vscode-extension/issues"
   },
   "homepage": "https://github.com/hmredmond/auth0-token-generator-vscode-extension#readme",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -89,7 +89,7 @@
         "command": "oauth-token-generator.generateTokenFromTreeInline",
         "title": "Get Token",
         "category": "OAuth",
-        "icon": "$(symbol-key)"
+        "icon": "$(key)"
       },
       {
         "command": "oauth-token-generator.exportEnvironments",
@@ -137,11 +137,6 @@
           "command": "oauth-token-generator.generateTokenFromTreeInline",
           "when": "view == auth0Environments && viewItem == environment",
           "group": "inline@1"
-        },
-        {
-          "command": "oauth-token-generator.editEnvironmentFromTree",
-          "when": "view == auth0Environments && viewItem == environment",
-          "group": "inline@2"
         }
       ]
     },

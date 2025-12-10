@@ -8,10 +8,15 @@ export class WebviewManager {
   private storageManager: StorageManager;
   private panel?: vscode.WebviewPanel;
   private shouldLoadEnvironment?: string;
+  private onTreeViewRefreshCallback?: () => void;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.storageManager = new StorageManager(context);
+  }
+
+  setTreeViewRefreshCallback(callback: () => void): void {
+    this.onTreeViewRefreshCallback = callback;
   }
 
   async showConfigurationPanel(environmentName?: string): Promise<void> {
@@ -797,36 +802,41 @@ export class WebviewManager {
 
         // Set up event delegation for environment action buttons
         document.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target && target.dataset && target.dataset.action) {
-                const action = target.dataset.action;
-                const envName = target.dataset.envName;
+            // Find the element with data-action (traverse up if needed)
+            let target = e.target;
+            while (target && target !== document.body) {
+                if (target.dataset && target.dataset.action) {
+                    const action = target.dataset.action;
+                    const envName = target.dataset.envName;
 
-                console.log('Button clicked:', action, 'for environment:', envName);
+                    console.log('Action triggered:', action, 'for environment:', envName);
 
-                if (action === 'delete') {
-                    console.log('Delete action triggered');
-                    showConfirm(\`Are you sure you want to delete the environment "\${envName}"?\`, (confirmed) => {
-                        if (confirmed) {
-                            console.log('Delete confirmed, sending message...');
-                            vscode.postMessage({
-                                type: 'deleteEnvironment',
-                                data: { name: envName }
-                            });
-                        }
-                    });
-                } else if (action === 'edit') {
-                    showLoading('Retrieving ' + envName + '...');
-                    vscode.postMessage({
-                        type: 'loadEnvironment',
-                        data: { name: envName }
-                    });
-                } else if (action === 'getToken') {
-                    vscode.postMessage({
-                        type: 'getToken',
-                        data: { name: envName }
-                    });
+                    if (action === 'delete') {
+                        console.log('Delete action triggered');
+                        showConfirm(\`Are you sure you want to delete the environment "\${envName}"?\`, (confirmed) => {
+                            if (confirmed) {
+                                console.log('Delete confirmed, sending message...');
+                                vscode.postMessage({
+                                    type: 'deleteEnvironment',
+                                    data: { name: envName }
+                                });
+                            }
+                        });
+                    } else if (action === 'edit') {
+                        showLoading('Retrieving ' + envName + '...');
+                        vscode.postMessage({
+                            type: 'loadEnvironment',
+                            data: { name: envName }
+                        });
+                    } else if (action === 'getToken') {
+                        vscode.postMessage({
+                            type: 'getToken',
+                            data: { name: envName }
+                        });
+                    }
+                    break;
                 }
+                target = target.parentElement;
             }
         });
 
@@ -1022,6 +1032,11 @@ export class WebviewManager {
       } else {
         vscode.window.showInformationMessage(`✓ Credentials saved for environment: ${data.environmentName}`);
       }
+
+      // Refresh tree views
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       vscode.window.showErrorMessage(`Failed to save credentials: ${errorMessage}`);
@@ -1098,6 +1113,11 @@ export class WebviewManager {
 
       // Also reload the environments list
       await this.handleLoadEnvironments();
+
+      // Refresh tree views
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Delete environment failed:', error);

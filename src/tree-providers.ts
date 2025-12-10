@@ -113,7 +113,8 @@ export class EnvironmentTreeItem extends vscode.TreeItem {
 
     if (itemType === 'environment') {
       this.tooltip = `${label}\n${description}${isCurrent ? ' (current)' : ''}`;
-      this.description = isCurrent ? `${description} (current)` : description;
+      // Add padding to prevent text overlap with inline action button
+      this.description = isCurrent ? `${description} (current)                    ` : `${description}                    `;
       this.iconPath = new vscode.ThemeIcon(
         isCurrent ? 'server-environment' : 'server',
         isCurrent ? new vscode.ThemeColor('charts.green') : undefined
@@ -121,9 +122,9 @@ export class EnvironmentTreeItem extends vscode.TreeItem {
 
       this.contextValue = 'environment';
       this.command = {
-        command: 'oauth-token-generator.generateTokenFromTree',
-        title: 'Generate Token',
-        arguments: [this.environment]
+        command: 'oauth-token-generator.editEnvironmentFromTree',
+        title: 'Edit Environment',
+        arguments: [this]
       };
     } else if (itemType === 'loading') {
       this.iconPath = new vscode.ThemeIcon('loading~spin');
