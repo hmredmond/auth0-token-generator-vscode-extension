@@ -23,10 +23,11 @@ export class WebviewManager {
     this.shouldLoadEnvironment = environmentName;
 
     if (this.panel) {
-      this.panel.reveal();
+      this.panel.reveal(vscode.ViewColumn.One);
       // If an environment name is provided, load it in the existing panel
       if (this.shouldLoadEnvironment) {
         await this.handleLoadEnvironment(this.shouldLoadEnvironment);
+        this.shouldLoadEnvironment = undefined; // Clear the flag after loading
       }
       return;
     }
