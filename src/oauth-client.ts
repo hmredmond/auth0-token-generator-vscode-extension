@@ -100,6 +100,8 @@ export class OAuthClient {
         if (statusCode === 401) {
           message += `\n\n💡 Troubleshooting Tips:`;
           message += `\n  - Check that your Client ID and Client Secret are correct`;
+          message += `\n  - If using \${ENV_VAR} placeholders, verify environment variables are set`;
+          message += `\n  - Create a .env.local file in your workspace root with your credentials`;
           message += `\n  - Verify the Authentication Method (Body vs Basic Auth)`;
           message += `\n  - Ensure credentials haven't expired`;
         } else if (statusCode === 403) {
@@ -137,9 +139,22 @@ export class OAuthClient {
 
   private substituteEnvVars(value: string): string {
     // Replace ${ENV_VAR_NAME} with process.env[ENV_VAR_NAME]
-    return value.replace(/\$\{([^}]+)\}/g, (match, varName) => {
-      return process.env[varName] || match; // Fallback to original if not found
+    const missingVars: string[] = [];
+    const result = value.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+      const envValue = process.env[varName];
+      if (!envValue) {
+        missingVars.push(varName);
+      }
+      return envValue || match; // Fallback to original if not found
     });
+
+    // Log warning if variables were not found (helps with debugging)
+    if (missingVars.length > 0) {
+      console.warn(`Environment variables not found: ${missingVars.join(', ')}`);
+      console.warn('Make sure VSCode was launched from a terminal with these variables exported, or use the actual values directly.');
+    }
+
+    return result;
   }
 
   async validateCredentials(): Promise<boolean> {

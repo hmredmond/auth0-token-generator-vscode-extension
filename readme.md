@@ -161,6 +161,26 @@ The extension will substitute `${VARIABLE_NAME}` with the value from `process.en
 
 **Setting environment variables:**
 
+**Option 1: Using .env files (Recommended)**
+
+Create a `.env` or `.env.local` file in your workspace root:
+
+```bash
+# .env.local
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-secret
+AUTH0_TOKEN_ENDPOINT=https://your-tenant.auth0.com/oauth/token
+AUTH0_AUDIENCE=https://api.example.com
+```
+
+The extension will automatically load environment variables from these files when it activates:
+- `.env` - Base environment variables
+- `.env.local` - Local overrides (add to `.gitignore`)
+- `.env.development` - Development-specific variables
+- `.env.production` - Production-specific variables
+
+**Option 2: Launch VSCode from terminal**
+
 macOS/Linux:
 ```bash
 export AUTH0_CLIENT_ID="your-client-id"

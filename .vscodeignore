@@ -17,3 +17,6 @@ webpack.config.js
 .editorconfig
 .eslintrc.js
 extension.code-workspace
+.env
+.env.*
+!.env.example

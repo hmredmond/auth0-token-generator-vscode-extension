@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import { config } from 'dotenv';
 import { CommandManager } from './commands';
 import { StatusBarManager } from './status-bar';
 import { StorageManager } from './storage-manager';
@@ -10,8 +13,54 @@ let statusBarManager: StatusBarManager;
 let environmentsTreeProvider: EnvironmentsTreeProvider;
 let tokensTreeProvider: TokensTreeProvider;
 
+/**
+ * Load environment variables from .env files in the workspace root
+ * Supports .env, .env.local, .env.development, .env.production
+ */
+function loadEnvironmentVariables() {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    console.log('No workspace folder open, skipping .env file loading');
+    return;
+  }
+
+  const workspaceRoot = workspaceFolders[0].uri.fsPath;
+
+  // Try loading in order of precedence (later files override earlier ones)
+  // .env.local and .env.production/.env.development override .env
+  const envFiles = ['.env', '.env.local', '.env.development', '.env.production'];
+  let loadedCount = 0;
+
+  for (const envFile of envFiles) {
+    const envPath = path.join(workspaceRoot, envFile);
+
+    if (fs.existsSync(envPath)) {
+      try {
+        // Use override: true so later files can override earlier ones
+        const result = config({ path: envPath, override: true });
+        if (result.parsed) {
+          loadedCount++;
+          console.log(`Loaded environment variables from ${envFile}`);
+        }
+      } catch (error) {
+        console.warn(`Failed to load ${envFile}:`, error);
+      }
+    }
+  }
+
+  if (loadedCount > 0) {
+    console.log(`Successfully loaded environment variables from ${loadedCount} file(s)`);
+  } else {
+    console.log('No .env files found in workspace root');
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
   console.log('OAuth Token Generator extension is now active!');
+
+  // Load .env files from workspace root if they exist
+  loadEnvironmentVariables();
 
   // Initialize managers
   const storageManager = new StorageManager(context);

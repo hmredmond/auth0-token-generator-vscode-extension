@@ -7,6 +7,7 @@ export class WebviewManager {
   private context: vscode.ExtensionContext;
   private storageManager: StorageManager;
   private panel?: vscode.WebviewPanel;
+  private shouldLoadEnvironment?: string;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -14,13 +15,13 @@ export class WebviewManager {
   }
 
   async showConfigurationPanel(environmentName?: string): Promise<void> {
-    const shouldLoadEnvironment = environmentName;
+    this.shouldLoadEnvironment = environmentName;
 
     if (this.panel) {
       this.panel.reveal();
       // If an environment name is provided, load it in the existing panel
-      if (shouldLoadEnvironment) {
-        await this.handleLoadEnvironment(shouldLoadEnvironment);
+      if (this.shouldLoadEnvironment) {
+        await this.handleLoadEnvironment(this.shouldLoadEnvironment);
       }
       return;
     }
@@ -50,13 +51,19 @@ export class WebviewManager {
             break;
           case 'loadEnvironments':
             await this.handleLoadEnvironments();
-            // If we need to load a specific environment after the list is loaded
-            if (shouldLoadEnvironment) {
+            // Only auto-load a specific environment on initial page load, not after saves
+            if (this.shouldLoadEnvironment) {
+              const envToLoad = this.shouldLoadEnvironment;
+              console.log(`Auto-loading environment on initial page load: ${envToLoad}`);
               setTimeout(() => {
                 if (this.panel) {
-                  this.handleLoadEnvironment(shouldLoadEnvironment);
+                  this.handleLoadEnvironment(envToLoad);
                 }
               }, 50);
+              // Clear the flag so we don't reload on subsequent loadEnvironments calls
+              this.shouldLoadEnvironment = undefined;
+            } else {
+              console.log('Skipping auto-load - no environment specified or already loaded once');
             }
             break;
           case 'loadEnvironment':
@@ -168,9 +175,17 @@ export class WebviewManager {
             border-radius: 4px;
             margin-bottom: 8px;
             background-color: var(--vscode-panel-background);
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .environment-item:hover {
+            background-color: var(--vscode-list-hoverBackground);
         }
         .environment-item.current {
             border-color: var(--vscode-focusBorder);
+            background-color: var(--vscode-list-activeSelectionBackground);
+        }
+        .environment-item.current:hover {
             background-color: var(--vscode-list-activeSelectionBackground);
         }
         .environment-header {
@@ -877,6 +892,10 @@ export class WebviewManager {
                 case 'credentialsSaved':
                     // Keep the form as-is and reload the environments list
                     // Don't close the modal - let the user close it manually
+                    // Update the original name tracker if this was a rename
+                    if (message.data && message.data.wasRenamed) {
+                        originalEnvironmentName = message.data.newEnvironmentName;
+                    }
                     loadEnvironments();
                     break;
                 case 'environmentDeleted':
@@ -928,16 +947,15 @@ export class WebviewManager {
             container.innerHTML = environments.map(env => {
                 const isCurrent = env.name === currentEnv;
                 return \`
-                    <div class="environment-item \${isCurrent ? 'current' : ''}">
+                    <div class="environment-item \${isCurrent ? 'current' : ''}" data-action="edit" data-env-name="\${env.name}">
                         <div class="environment-header">
                             <div>
                                 <div class="environment-name">\${env.name} \${isCurrent ? '(current)' : ''}</div>
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <button class="button secondary icon" data-action="getToken" data-env-name="\${env.name}" title="Get Token">↻</button>
-                                <button class="button secondary icon" data-action="edit" data-env-name="\${env.name}" title="Edit">✎</button>
-                                <button class="button secondary icon" data-action="delete" data-env-name="\${env.name}" title="Delete">×</button>
+                                <button class="button secondary icon" data-action="getToken" data-env-name="\${env.name}" title="Get Token" onclick="event.stopPropagation()">↻</button>
+                                <button class="button secondary icon" data-action="delete" data-env-name="\${env.name}" title="Delete" onclick="event.stopPropagation()">×</button>
                             </div>
                         </div>
                     </div>
@@ -991,10 +1009,19 @@ export class WebviewManager {
       }
 
       this.panel?.webview.postMessage({
-        type: 'credentialsSaved'
+        type: 'credentialsSaved',
+        data: {
+          newEnvironmentName: data.environmentName,
+          wasRenamed: data.originalEnvironmentName && data.originalEnvironmentName !== data.environmentName
+        }
       });
 
-      vscode.window.showInformationMessage(`✓ Credentials saved for environment: ${data.environmentName}`);
+      // Show appropriate message based on whether it was a rename or update
+      if (data.originalEnvironmentName && data.originalEnvironmentName !== data.environmentName) {
+        vscode.window.showInformationMessage(`✓ Environment renamed from '${data.originalEnvironmentName}' to '${data.environmentName}'`);
+      } else {
+        vscode.window.showInformationMessage(`✓ Credentials saved for environment: ${data.environmentName}`);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       vscode.window.showErrorMessage(`Failed to save credentials: ${errorMessage}`);
