@@ -198,6 +198,65 @@ export class WebviewManager {
             border-bottom: 1px solid var(--vscode-panel-border);
             padding-bottom: 8px;
         }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .info-icon:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            z-index: 1000;
+            background-color: var(--vscode-editorHoverWidget-background);
+            color: var(--vscode-editorHoverWidget-foreground);
+            border: 1px solid var(--vscode-editorHoverWidget-border);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.5;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            white-space: normal;
+        }
+        .info-icon:hover .tooltip {
+            visibility: visible;
+        }
+        .tooltip code {
+            background-color: var(--vscode-textCodeBlock-background);
+            color: var(--vscode-textPreformat-foreground);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 12px;
+        }
+        .tooltip strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--vscode-textLink-foreground);
+        }
         .header-row {
             display: flex;
             gap: 8px;
@@ -452,7 +511,22 @@ export class WebviewManager {
                 <div class="help-text">Request payload format</div>
             </div>
 
-            <div class="section-title" style="margin-top: 24px;">Custom Headers (Optional)</div>
+            <div class="section-header" style="margin-top: 24px;">
+                <div class="section-title" style="margin: 0;">Custom Headers (Optional)</div>
+                <span class="info-icon">i
+                    <span class="tooltip">
+                        <strong>Custom Headers with Environment Variables</strong>
+                        You can use environment variables in your header values using the format <code>\${ENV_VAR_NAME}</code>
+                        <br><br>
+                        <strong>Examples:</strong><br>
+                        • Static value: <code>my-api-key-123</code><br>
+                        • Environment variable: <code>\${API_KEY}</code><br>
+                        • Mixed: <code>Bearer \${AUTH_TOKEN}</code>
+                        <br><br>
+                        Environment variables are read from your system or VSCode terminal environment at runtime.
+                    </span>
+                </span>
+            </div>
             <div id="customHeadersContainer"></div>
             <button type="button" class="button secondary" id="addHeaderBtn">+ Add Header</button>
 
