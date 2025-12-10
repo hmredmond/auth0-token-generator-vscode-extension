@@ -68,6 +68,12 @@ export class WebviewManager {
           case 'getToken':
             await this.handleGetToken(message.data.name);
             break;
+          case 'exportEnvironments':
+            await this.handleExportEnvironments();
+            break;
+          case 'importEnvironments':
+            await this.handleImportEnvironments();
+            break;
         }
       }
     );
@@ -369,6 +375,47 @@ export class WebviewManager {
             align-items: center;
             margin-bottom: 16px;
         }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .loading-content {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            padding: 24px 32px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .spinner {
+            border: 3px solid var(--vscode-panel-border);
+            border-top: 3px solid var(--vscode-button-background);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 14px;
+            color: var(--vscode-foreground);
+            margin: 0;
+        }
 
         /* Responsive styles for narrow panels */
         @media (max-width: 600px) {
@@ -565,13 +612,25 @@ export class WebviewManager {
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p class="loading-text" id="loadingText">Loading...</p>
+        </div>
+    </div>
+
     <!-- Main Container -->
     <div class="container">
         <h1>OAuth Token Generator Configuration</h1>
 
         <div class="environments-header">
             <div class="section-title" style="margin: 0;">Configured Environments</div>
-            <button type="button" class="button" id="addNewBtn">+ Add New Environment</button>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="button secondary" id="exportBtn">Export</button>
+                <button type="button" class="button secondary" id="importBtn">Import</button>
+                <button type="button" class="button" id="addNewBtn">+ Add New</button>
+            </div>
         </div>
         <div id="environmentsList" class="environment-list">
             <!-- Environments will be loaded here -->
@@ -583,6 +642,19 @@ export class WebviewManager {
         let headerCounter = 0;
         let confirmCallback = null;
         let originalEnvironmentName = null; // Track the original name when editing
+
+        // Loading overlay management
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+
+        function showLoading(message) {
+            loadingText.textContent = message;
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
 
         // Confirmation dialog management
         const confirmDialog = document.getElementById('confirmDialog');
@@ -636,6 +708,14 @@ export class WebviewManager {
             headerCounter = 0;
             originalEnvironmentName = null; // Reset when adding new
             openModal('Add New Environment');
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            vscode.postMessage({ type: 'exportEnvironments' });
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => {
+            vscode.postMessage({ type: 'importEnvironments' });
         });
 
         closeModal.addEventListener('click', closeModalFn);
@@ -721,7 +801,7 @@ export class WebviewManager {
                         }
                     });
                 } else if (action === 'edit') {
-                    openModal('Edit Environment');
+                    showLoading('Retrieving ' + envName + '...');
                     vscode.postMessage({
                         type: 'loadEnvironment',
                         data: { name: envName }
@@ -805,6 +885,9 @@ export class WebviewManager {
                     break;
                 case 'environmentLoaded':
                     const env = message.data;
+
+                    // Hide loading spinner
+                    hideLoading();
 
                     // Store the original name for updates
                     originalEnvironmentName = env.name;
@@ -1057,6 +1140,86 @@ export class WebviewManager {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       vscode.window.showErrorMessage(`Failed to generate token for '${envName}': ${errorMessage}`);
+    }
+  }
+
+  private async handleExportEnvironments(): Promise<void> {
+    try {
+      const environments = await this.storageManager.getEnvironments();
+
+      if (environments.length === 0) {
+        vscode.window.showInformationMessage('No environments to export.');
+        return;
+      }
+
+      const jsonData = await this.storageManager.exportEnvironments();
+
+      const uri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file('oauth-environments.json'),
+        filters: {
+          'JSON Files': ['json'],
+          'All Files': ['*']
+        },
+        saveLabel: 'Export'
+      });
+
+      if (uri) {
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(jsonData, 'utf8'));
+        vscode.window.showInformationMessage(`✓ Exported ${environments.length} environment(s) to ${uri.fsPath}`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to export environments: ${errorMessage}`);
+    }
+  }
+
+  private async handleImportEnvironments(): Promise<void> {
+    try {
+      const uri = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        filters: {
+          'JSON Files': ['json'],
+          'All Files': ['*']
+        },
+        openLabel: 'Import'
+      });
+
+      if (!uri || uri.length === 0) {
+        return;
+      }
+
+      const fileContent = await vscode.workspace.fs.readFile(uri[0]);
+      const jsonData = Buffer.from(fileContent).toString('utf8');
+
+      // Ask user if they want to overwrite existing environments
+      const overwrite = await vscode.window.showQuickPick(
+        [
+          { label: 'Skip existing', description: 'Keep existing environments with same name', value: false },
+          { label: 'Overwrite existing', description: 'Replace environments with same name', value: true }
+        ],
+        {
+          placeHolder: 'How should we handle environments that already exist?'
+        }
+      );
+
+      if (overwrite === undefined) {
+        return;
+      }
+
+      const result = await this.storageManager.importEnvironments(jsonData, overwrite.value);
+
+      let message = `✓ Import completed: ${result.imported} imported`;
+      if (result.skipped > 0) {
+        message += `, ${result.skipped} skipped`;
+      }
+
+      vscode.window.showInformationMessage(message);
+
+      // Reload the environments list in the webview
+      await this.handleLoadEnvironments();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to import environments: ${errorMessage}`);
     }
   }
 }

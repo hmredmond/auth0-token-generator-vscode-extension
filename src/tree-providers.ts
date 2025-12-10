@@ -27,7 +27,7 @@ export class EnvironmentsTreeProvider implements vscode.TreeDataProvider<Environ
       const currentEnv = await this.storageManager.getCurrentEnvironment();
 
       if (environments.length === 0) {
-        return [new EnvironmentTreeItem('No environments configured', '', false, 'none')];
+        return [new EnvironmentTreeItem('Loading...', '', false, 'loading')];
       }
 
       return environments.map(env =>
@@ -106,7 +106,7 @@ export class EnvironmentTreeItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly description: string,
     public readonly isCurrent: boolean,
-    public readonly itemType: 'environment' | 'none',
+    public readonly itemType: 'environment' | 'none' | 'loading',
     public readonly environment?: OAuthEnvironment
   ) {
     super(label, vscode.TreeItemCollapsibleState.None);
@@ -125,6 +125,9 @@ export class EnvironmentTreeItem extends vscode.TreeItem {
         title: 'Generate Token',
         arguments: [this.environment]
       };
+    } else if (itemType === 'loading') {
+      this.iconPath = new vscode.ThemeIcon('loading~spin');
+      this.contextValue = 'loading';
     } else {
       this.iconPath = new vscode.ThemeIcon('info');
       this.contextValue = 'placeholder';

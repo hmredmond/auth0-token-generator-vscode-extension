@@ -90,19 +90,41 @@
         "title": "Get Token",
         "category": "OAuth",
         "icon": "$(symbol-key)"
+      },
+      {
+        "command": "oauth-token-generator.exportEnvironments",
+        "title": "Export Environments",
+        "category": "OAuth",
+        "icon": "$(save)"
+      },
+      {
+        "command": "oauth-token-generator.importEnvironments",
+        "title": "Import Environments",
+        "category": "OAuth",
+        "icon": "$(import)"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "command": "oauth-token-generator.importEnvironments",
+          "when": "view == auth0Environments",
+          "group": "navigation@1"
+        },
+        {
+          "command": "oauth-token-generator.exportEnvironments",
+          "when": "view == auth0Environments",
+          "group": "navigation@2"
+        },
+        {
           "command": "oauth-token-generator.refreshEnvironments",
           "when": "view == auth0Environments",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "oauth-token-generator.openConfigFromTree",
           "when": "view == auth0Environments",
-          "group": "navigation"
+          "group": "navigation@4"
         },
         {
           "command": "oauth-token-generator.refreshTokens",

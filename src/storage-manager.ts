@@ -111,4 +111,57 @@ export class StorageManager {
     });
     await this.context.globalState.update(StorageManager.TOKENS_KEY, updatedTokens);
   }
+
+  async exportEnvironments(): Promise<string> {
+    const environments = await this.getEnvironments();
+
+    // Create a sanitized version with secrets masked
+    const sanitizedEnvironments = environments.map(env => ({
+      ...env,
+      credentials: {
+        ...env.credentials,
+        clientSecret: '*****'
+      }
+    }));
+
+    return JSON.stringify(sanitizedEnvironments, null, 2);
+  }
+
+  async importEnvironments(jsonData: string, overwrite: boolean = false): Promise<{ imported: number; skipped: number }> {
+    try {
+      const importedEnvironments = JSON.parse(jsonData) as OAuthEnvironment[];
+
+      if (!Array.isArray(importedEnvironments)) {
+        throw new Error('Invalid format: Expected an array of environments');
+      }
+
+      const existingEnvironments = await this.getEnvironments();
+      const existingNames = new Set(existingEnvironments.map(env => env.name));
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const env of importedEnvironments) {
+        if (!env.name || !env.credentials) {
+          skipped++;
+          continue;
+        }
+
+        if (existingNames.has(env.name) && !overwrite) {
+          skipped++;
+          continue;
+        }
+
+        await this.saveEnvironment(env);
+        imported++;
+      }
+
+      return { imported, skipped };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to import environments: ${error.message}`);
+      }
+      throw new Error('Failed to import environments: Unknown error');
+    }
+  }
 }

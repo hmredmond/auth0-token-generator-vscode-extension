@@ -193,4 +193,86 @@ export class CommandManager {
   private async copyTokenToClipboard(token: string): Promise<void> {
     await vscode.env.clipboard.writeText(token);
   }
+
+  async exportEnvironments(): Promise<void> {
+    try {
+      const environments = await this.storageManager.getEnvironments();
+
+      if (environments.length === 0) {
+        vscode.window.showInformationMessage('No environments to export.');
+        return;
+      }
+
+      const jsonData = await this.storageManager.exportEnvironments();
+
+      const uri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file('oauth-environments.json'),
+        filters: {
+          'JSON Files': ['json'],
+          'All Files': ['*']
+        },
+        saveLabel: 'Export'
+      });
+
+      if (uri) {
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(jsonData, 'utf8'));
+        vscode.window.showInformationMessage(`✓ Exported ${environments.length} environment(s) to ${uri.fsPath}`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to export environments: ${errorMessage}`);
+    }
+  }
+
+  async importEnvironments(): Promise<void> {
+    try {
+      const uri = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        filters: {
+          'JSON Files': ['json'],
+          'All Files': ['*']
+        },
+        openLabel: 'Import'
+      });
+
+      if (!uri || uri.length === 0) {
+        return;
+      }
+
+      const fileContent = await vscode.workspace.fs.readFile(uri[0]);
+      const jsonData = Buffer.from(fileContent).toString('utf8');
+
+      // Ask user if they want to overwrite existing environments
+      const overwrite = await vscode.window.showQuickPick(
+        [
+          { label: 'Skip existing', description: 'Keep existing environments with same name', value: false },
+          { label: 'Overwrite existing', description: 'Replace environments with same name', value: true }
+        ],
+        {
+          placeHolder: 'How should we handle environments that already exist?'
+        }
+      );
+
+      if (overwrite === undefined) {
+        return;
+      }
+
+      const result = await this.storageManager.importEnvironments(jsonData, overwrite.value);
+
+      let message = `✓ Import completed: ${result.imported} imported`;
+      if (result.skipped > 0) {
+        message += `, ${result.skipped} skipped`;
+      }
+
+      vscode.window.showInformationMessage(message);
+
+      // Refresh tree views
+      if (this.onTreeViewRefreshCallback) {
+        this.onTreeViewRefreshCallback();
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      vscode.window.showErrorMessage(`Failed to import environments: ${errorMessage}`);
+    }
+  }
 }

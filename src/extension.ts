@@ -39,6 +39,12 @@ export function activate(context: vscode.ExtensionContext) {
     showCollapseAll: false
   });
 
+  // Trigger initial refresh after a brief delay to load actual data
+  setTimeout(() => {
+    environmentsTreeProvider.refresh();
+    tokensTreeProvider.refresh();
+  }, 100);
+
   // Register commands
   const generateTokenCommand = vscode.commands.registerCommand(
     'oauth-token-generator.generateToken',
@@ -120,6 +126,19 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const exportEnvironmentsCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.exportEnvironments',
+    () => commandManager.exportEnvironments()
+  );
+
+  const importEnvironmentsCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.importEnvironments',
+    async () => {
+      await commandManager.importEnvironments();
+      environmentsTreeProvider.refresh();
+    }
+  );
+
   // Register event listeners
   const onConfigurationChanged = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('oauthTokenGenerator')) {
@@ -140,6 +159,8 @@ export function activate(context: vscode.ExtensionContext) {
     openConfigFromTreeCommand,
     editEnvironmentFromTreeCommand,
     generateTokenFromTreeInlineCommand,
+    exportEnvironmentsCommand,
+    importEnvironmentsCommand,
     environmentsTreeView,
     tokensTreeView,
     onConfigurationChanged
