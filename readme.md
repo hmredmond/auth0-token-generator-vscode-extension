@@ -131,27 +131,49 @@ Once configured, you can generate tokens using any of these methods:
 
 ## Advanced Features
 
-### Custom Headers with Environment Variables
+### Environment Variables Support
 
-You can use environment variables in custom header values using the `${VARIABLE_NAME}` syntax:
+You can use environment variables in **any credential field** using the `${VARIABLE_NAME}` syntax. This is especially useful for keeping secrets out of your stored configurations.
 
-**Example:**
-- Header: `X-Context`
-- Value: `${TENANT_CONTEXT}`
+**Supported fields:**
+- Token Endpoint URL
+- Client ID
+- Client Secret
+- Audience
+- Scope
+- Custom Header Values
 
-The extension will substitute `${TENANT_CONTEXT}` with the value from `process.env.TENANT_CONTEXT` at runtime.
+**Examples:**
+
+```json
+{
+  "tokenEndpoint": "${AUTH0_TOKEN_ENDPOINT}",
+  "clientId": "${AUTH0_CLIENT_ID}",
+  "clientSecret": "${AUTH0_CLIENT_SECRET}",
+  "audience": "${AUTH0_AUDIENCE}",
+  "customHeaders": [
+    { "key": "X-Context", "value": "${TENANT_CONTEXT}" }
+  ]
+}
+```
+
+The extension will substitute `${VARIABLE_NAME}` with the value from `process.env.VARIABLE_NAME` at runtime. If a variable is not found, the placeholder text is used as-is.
 
 **Setting environment variables:**
 
 macOS/Linux:
 ```bash
-export TENANT_CONTEXT="production"
+export AUTH0_CLIENT_ID="your-client-id"
+export AUTH0_CLIENT_SECRET="your-secret"
+export AUTH0_TOKEN_ENDPOINT="https://your-tenant.auth0.com/oauth/token"
 code  # Launch VS Code from terminal to inherit environment
 ```
 
 Windows:
 ```cmd
-set TENANT_CONTEXT=production
+set AUTH0_CLIENT_ID=your-client-id
+set AUTH0_CLIENT_SECRET=your-secret
+set AUTH0_TOKEN_ENDPOINT=https://your-tenant.auth0.com/oauth/token
 code
 ```
 

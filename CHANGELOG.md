@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **🔐 Environment Variables Support for All Credential Fields**
+  - All credential fields now support environment variable substitution using `${VARIABLE_NAME}` syntax
+  - Supported fields: Token Endpoint URL, Client ID, Client Secret, Audience, Scope, and Custom Header Values
+  - Enables keeping secrets out of stored configurations for improved security
+  - Useful for sharing configurations between team members without exposing credentials
+  - Environment variables are evaluated at runtime when generating tokens
+
+### Changed
+
+- **Form UI Enhancements**
+  - Updated all form field placeholders to show environment variable syntax examples (e.g., `${CLIENT_ID}`)
+  - Added help text to each field indicating environment variable support
+
+### Improved
+
+- **Documentation**
+  - Updated README.md with comprehensive environment variables section
+  - Updated GETTING_STARTED.md with detailed examples of using environment variables in all credential fields
+  - Added troubleshooting guidance for environment variable issues
+  - Included setup instructions for macOS/Linux and Windows
+
+### Technical Details
+
+- Extended `substituteEnvVars` method in `OAuthClient` to work with all credential fields (previously only supported custom headers)
+- Method renamed from `substituteHeaderValue` to `substituteEnvVars` for clarity
+- All credential fields are now processed through environment variable substitution before use
+
 ## [2.0.0] - 2025-12-09
 
 ### Added - Major UI Enhancement with Sidebar Integration

@@ -203,23 +203,71 @@ The extension automatically caches valid tokens to avoid unnecessary API calls. 
 
 ---
 
-## Using Custom Headers
+## Using Environment Variables
 
-### When to use custom headers:
+### Overview
 
-Some OAuth providers require additional headers for authentication or context.
+**All credential fields** support environment variable substitution using the `${VARIABLE_NAME}` syntax. This is particularly useful for:
+- Keeping secrets out of stored configurations
+- Sharing configurations between team members
+- Managing credentials across different machines
+- Improving security by storing secrets in environment variables
 
-**Example 1: Static Custom Header**
+### Supported Fields
 
-Your API requires an enterprise ID header:
+Environment variables can be used in:
+- **Token Endpoint URL** - `${TOKEN_ENDPOINT}`
+- **Client ID** - `${CLIENT_ID}`
+- **Client Secret** - `${CLIENT_SECRET}`
+- **Audience** - `${AUDIENCE}`
+- **Scope** - `${SCOPE}`
+- **Custom Header Values** - `${HEADER_VALUE}`
+
+### Example 1: Securing Credentials with Environment Variables
+
+Instead of storing your actual client secret in VS Code:
 
 ```
-Custom Headers:
-  Header Name: X-Enterprise-Id
-  Header Value: ent_12345
+Environment Name: Production
+Token Endpoint: ${AUTH0_TOKEN_ENDPOINT}
+Client ID: ${AUTH0_CLIENT_ID}
+Client Secret: ${AUTH0_CLIENT_SECRET}
+Audience: ${AUTH0_AUDIENCE}
 ```
 
-**Example 2: Dynamic Header with Environment Variable**
+Then set these environment variables before launching VS Code:
+
+**Mac/Linux:**
+```bash
+export AUTH0_TOKEN_ENDPOINT="https://mycompany.auth0.com/oauth/token"
+export AUTH0_CLIENT_ID="abc123xyz456"
+export AUTH0_CLIENT_SECRET="supersecretkey789"
+export AUTH0_AUDIENCE="https://api.mycompany.com"
+code
+```
+
+**Windows:**
+```cmd
+set AUTH0_TOKEN_ENDPOINT=https://mycompany.auth0.com/oauth/token
+set AUTH0_CLIENT_ID=abc123xyz456
+set AUTH0_CLIENT_SECRET=supersecretkey789
+set AUTH0_AUDIENCE=https://api.mycompany.com
+code
+```
+
+### Example 2: Mixed Static and Dynamic Values
+
+You can mix hardcoded values with environment variables:
+
+```
+Environment Name: Development
+Token Endpoint: https://mycompany-dev.auth0.com/oauth/token
+Client ID: ${DEV_CLIENT_ID}
+Client Secret: ${DEV_CLIENT_SECRET}
+Audience: https://api.mycompany.com
+```
+
+### Example 3: Custom Headers with Environment Variables
 
 Your API requires a tenant context that changes per developer:
 
@@ -229,21 +277,7 @@ Custom Headers:
   Header Value: ${TENANT_ID}
 ```
 
-Then set the environment variable before launching VS Code:
-
-**Mac/Linux:**
-```bash
-export TENANT_ID="tenant_abc123"
-code
-```
-
-**Windows:**
-```cmd
-set TENANT_ID=tenant_abc123
-code
-```
-
-**Example 3: Multiple Custom Headers**
+**Example 4: Multiple Environment Variables**
 
 ```
 Header 1:
@@ -258,6 +292,13 @@ Header 3:
   Name: X-User-Context
   Value: ${USER_EMAIL}
 ```
+
+### Important Notes
+
+- If an environment variable is not found, the placeholder text (e.g., `${CLIENT_ID}`) will be used as-is
+- VS Code must be launched from a terminal to inherit environment variables
+- Environment variables are evaluated at runtime when tokens are generated
+- Changes to environment variables require restarting VS Code
 
 ---
 
@@ -537,27 +578,36 @@ Right: https://mycompany.auth0.com/oauth/token
 3. **Expired Token:** Cached token expired
    - Fix: Generate a fresh token
 
-### Scenario 3: Custom headers not working
+### Scenario 3: Environment variables not working
 
-**Problem:** Environment variable not substituted
+**Problem:** Environment variable not substituted in credentials or headers
 
 **Checklist:**
 1. ✓ Environment variable is set before launching VS Code
 2. ✓ Syntax is `${VAR_NAME}` (with curly braces)
 3. ✓ VS Code was launched from terminal (to inherit variables)
+4. ✓ Variable name is correct (case-sensitive)
 
 **Test:**
 ```bash
 # Mac/Linux
-echo $TENANT_ID    # Should print your value
-export TENANT_ID="tenant123"
+echo $CLIENT_ID    # Should print your value
+export CLIENT_ID="your-client-id"
+export CLIENT_SECRET="your-secret"
 code
 
 # Windows
-echo %TENANT_ID%   # Should print your value
-set TENANT_ID=tenant123
+echo %CLIENT_ID%   # Should print your value
+set CLIENT_ID=your-client-id
+set CLIENT_SECRET=your-secret
 code
 ```
+
+**Verification:**
+If you're unsure whether the variable was substituted:
+1. Check VS Code Developer Console (`Help > Toggle Developer Tools`)
+2. Look for error messages about authentication
+3. If you see literal `${VAR_NAME}` in errors, the variable wasn't set
 
 ---
 

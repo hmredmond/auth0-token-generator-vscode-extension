@@ -467,30 +467,32 @@ export class WebviewManager {
 
             <div class="form-group">
                 <label for="tokenEndpoint">Token Endpoint URL:</label>
-                <input type="text" id="tokenEndpoint" placeholder="https://your-domain.com/oauth/token" required>
-                <div class="help-text">Full URL to the OAuth token endpoint</div>
+                <input type="text" id="tokenEndpoint" placeholder="https://your-domain.com/oauth/token or \${TOKEN_ENDPOINT}" required>
+                <div class="help-text">Full URL to the OAuth token endpoint (supports \${ENV_VAR} syntax)</div>
             </div>
-            
+
             <div class="form-group">
                 <label for="clientId">Client ID:</label>
-                <input type="text" id="clientId" placeholder="Your Auth0 application client ID" required>
+                <input type="text" id="clientId" placeholder="Your client ID or \${CLIENT_ID}" required>
+                <div class="help-text">OAuth application client ID (supports \${ENV_VAR} syntax)</div>
             </div>
-            
+
             <div class="form-group">
                 <label for="clientSecret">Client Secret:</label>
-                <input type="password" id="clientSecret" placeholder="Your Auth0 application client secret" required>
+                <input type="password" id="clientSecret" placeholder="Your client secret or \${CLIENT_SECRET}" required>
+                <div class="help-text">OAuth application client secret (supports \${ENV_VAR} syntax)</div>
             </div>
-            
+
             <div class="form-group">
                 <label for="audience">Audience (optional):</label>
-                <input type="text" id="audience" placeholder="e.g., https://api.example.com">
-                <div class="help-text">The API identifier (if required by your provider)</div>
+                <input type="text" id="audience" placeholder="e.g., https://api.example.com or \${AUDIENCE}">
+                <div class="help-text">The API identifier (supports \${ENV_VAR} syntax)</div>
             </div>
-            
+
             <div class="form-group">
                 <label for="scope">Scope (optional):</label>
-                <input type="text" id="scope" placeholder="e.g., read:users write:users">
-                <div class="help-text">Space-separated list of scopes</div>
+                <input type="text" id="scope" placeholder="e.g., read:users write:users or \${SCOPE}">
+                <div class="help-text">Space-separated list of scopes (supports \${ENV_VAR} syntax)</div>
             </div>
 
             <div class="form-group">
