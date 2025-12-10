@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { OAuthClient } from './oauth-client';
 import { StorageManager } from './storage-manager';
 import { WebviewManager } from './webview-manager';
-import { OAuthCredentials, StoredToken, OAuthEnvironment } from './types';
+import {  StoredToken, OAuthEnvironment } from './types';
 
 export class CommandManager {
-  private storageManager: StorageManager;
-  private webviewManager: WebviewManager;
+  private readonly storageManager: StorageManager;
+  private readonly webviewManager: WebviewManager;
   private onTreeViewRefreshCallback?: () => void;
 
   constructor(context: vscode.ExtensionContext) {
@@ -23,7 +23,16 @@ export class CommandManager {
       const currentEnv = await this.storageManager.getCurrentEnvironment();
       let environment: OAuthEnvironment | undefined;
 
-      if (!currentEnv) {
+      if (currentEnv) {
+        const environments = await this.storageManager.getEnvironments();
+        environment = environments.find(env => env.name === currentEnv);
+        
+        if (!environment) {
+          vscode.window.showErrorMessage('Current environment not found. Please select a valid environment.');
+          await this.selectEnvironment();
+          return;
+        }
+      } else {
         const environments = await this.storageManager.getEnvironments();
         if (environments.length === 0) {
           vscode.window.showInformationMessage(
@@ -41,15 +50,6 @@ export class CommandManager {
           environment = environments[0];
           await this.storageManager.setCurrentEnvironment(environment.name);
         } else {
-          await this.selectEnvironment();
-          return;
-        }
-      } else {
-        const environments = await this.storageManager.getEnvironments();
-        environment = environments.find(env => env.name === currentEnv);
-        
-        if (!environment) {
-          vscode.window.showErrorMessage('Current environment not found. Please select a valid environment.');
           await this.selectEnvironment();
           return;
         }
@@ -119,6 +119,10 @@ export class CommandManager {
 
   async configureCredentials(): Promise<void> {
     await this.webviewManager.showConfigurationPanel();
+  }
+
+  async editEnvironment(environmentName: string): Promise<void> {
+    await this.webviewManager.showConfigurationPanel(environmentName);
   }
 
   async selectEnvironment(): Promise<void> {

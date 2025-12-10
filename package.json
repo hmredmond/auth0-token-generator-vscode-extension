@@ -10,13 +10,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension"
+    "url": "https://github.com/hmredmond/auth0-token-generator-vscode-extension"
   },
   "bugs": {
-    "url": "https://github.com/hmredmond/oauth-token-generator-vscode-extension/issues"
+    "url": "https://github.com/hmredmond/auth0-token-generator-vscode-extension/issues"
   },
-  "homepage": "https://github.com/hmredmond/oauth-token-generator-vscode-extension#readme",
-  "version": "2.1.0",
+  "homepage": "https://github.com/hmredmond/auth0-token-generator-vscode-extension#readme",
+  "version": "2.2.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -78,6 +78,18 @@
         "title": "Configure Credentials",
         "category": "OAuth",
         "icon": "$(add)"
+      },
+      {
+        "command": "oauth-token-generator.editEnvironmentFromTree",
+        "title": "Edit Environment",
+        "category": "OAuth",
+        "icon": "$(pencil)"
+      },
+      {
+        "command": "oauth-token-generator.generateTokenFromTreeInline",
+        "title": "Get Token",
+        "category": "OAuth",
+        "icon": "$(symbol-key)"
       }
     ],
     "menus": {
@@ -96,6 +108,18 @@
           "command": "oauth-token-generator.refreshTokens",
           "when": "view == auth0Tokens",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "oauth-token-generator.generateTokenFromTreeInline",
+          "when": "view == auth0Environments && viewItem == environment",
+          "group": "inline@1"
+        },
+        {
+          "command": "oauth-token-generator.editEnvironmentFromTree",
+          "when": "view == auth0Environments && viewItem == environment",
+          "group": "inline@2"
         }
       ]
     },

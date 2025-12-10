@@ -99,6 +99,27 @@ export function activate(context: vscode.ExtensionContext) {
     () => commandManager.configureCredentials()
   );
 
+  const editEnvironmentFromTreeCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.editEnvironmentFromTree',
+    async (item: any) => {
+      if (item && item.environment) {
+        await commandManager.editEnvironment(item.environment.name);
+      }
+    }
+  );
+
+  const generateTokenFromTreeInlineCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.generateTokenFromTreeInline',
+    async (item: any) => {
+      if (item && item.environment) {
+        await storageManager.setCurrentEnvironment(item.environment.name);
+        await commandManager.generateToken();
+        environmentsTreeProvider.refresh();
+        tokensTreeProvider.refresh();
+      }
+    }
+  );
+
   // Register event listeners
   const onConfigurationChanged = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('oauthTokenGenerator')) {
@@ -117,6 +138,8 @@ export function activate(context: vscode.ExtensionContext) {
     refreshEnvironmentsCommand,
     refreshTokensCommand,
     openConfigFromTreeCommand,
+    editEnvironmentFromTreeCommand,
+    generateTokenFromTreeInlineCommand,
     environmentsTreeView,
     tokensTreeView,
     onConfigurationChanged

@@ -76,10 +76,60 @@ export class OAuthClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.error_description ||
-                       error.response?.data?.error ||
-                       error.message;
-        throw new Error(`OAuth token generation failed: ${message}`);
+        const statusCode = error.response?.status;
+        const errorData = error.response?.data;
+        const errorDescription = errorData?.error_description || errorData?.message;
+        const errorType = errorData?.error || 'unknown_error';
+
+        // Build detailed error message
+        let message = `OAuth token request failed`;
+
+        if (statusCode) {
+          message += ` (HTTP ${statusCode})`;
+        }
+
+        if (errorType) {
+          message += `\n• Error Type: ${errorType}`;
+        }
+
+        if (errorDescription) {
+          message += `\n• Details: ${errorDescription}`;
+        }
+
+        // Add helpful hints based on status code
+        if (statusCode === 401) {
+          message += `\n\n💡 Troubleshooting Tips:`;
+          message += `\n  - Check that your Client ID and Client Secret are correct`;
+          message += `\n  - Verify the Authentication Method (Body vs Basic Auth)`;
+          message += `\n  - Ensure credentials haven't expired`;
+        } else if (statusCode === 403) {
+          message += `\n\n💡 Troubleshooting Tips:`;
+          message += `\n  - Check if the application has the required permissions`;
+          message += `\n  - Verify the Audience value is correct`;
+          message += `\n  - Ensure the application is enabled in your OAuth provider`;
+        } else if (statusCode === 404) {
+          message += `\n\n💡 Troubleshooting Tips:`;
+          message += `\n  - Check that the Token Endpoint URL is correct`;
+          message += `\n  - Verify the domain/tenant name in the URL`;
+          message += `\n  - URL should end with /oauth/token or similar`;
+        } else if (!statusCode && error.code === 'ENOTFOUND') {
+          message = `Cannot reach OAuth server: ${error.message}`;
+          message += `\n\n💡 Troubleshooting Tips:`;
+          message += `\n  - Check your internet connection`;
+          message += `\n  - Verify the Token Endpoint URL is correct`;
+          message += `\n  - Check if you need a VPN or proxy`;
+        }
+
+        // Add request details for debugging
+        message += `\n\n📋 Request Details:`;
+        message += `\n  - Endpoint: ${tokenEndpoint}`;
+        message += `\n  - Auth Method: ${authMethod}`;
+        message += `\n  - Content Type: ${contentType}`;
+        if (audience || credentialAudience) {
+          message += `\n  - Audience: ${audience || credentialAudience}`;
+        }
+
+        throw new Error(message);
       }
       throw error;
     }
@@ -96,8 +146,9 @@ export class OAuthClient {
     try {
       await this.generateToken();
       return true;
-    } catch {
-      return false;
+    } catch (error) {
+      // Re-throw the error so we can show detailed message to user
+      throw error;
     }
   }
 }

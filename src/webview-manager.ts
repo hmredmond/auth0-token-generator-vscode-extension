@@ -13,9 +13,15 @@ export class WebviewManager {
     this.storageManager = new StorageManager(context);
   }
 
-  async showConfigurationPanel(): Promise<void> {
+  async showConfigurationPanel(environmentName?: string): Promise<void> {
+    const shouldLoadEnvironment = environmentName;
+
     if (this.panel) {
       this.panel.reveal();
+      // If an environment name is provided, load it in the existing panel
+      if (shouldLoadEnvironment) {
+        await this.handleLoadEnvironment(shouldLoadEnvironment);
+      }
       return;
     }
 
@@ -25,7 +31,7 @@ export class WebviewManager {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        retainContextWhenHidden: false,
+        retainContextWhenHidden: true,
         enableCommandUris: true,
         enableForms: true
       }
@@ -44,6 +50,14 @@ export class WebviewManager {
             break;
           case 'loadEnvironments':
             await this.handleLoadEnvironments();
+            // If we need to load a specific environment after the list is loaded
+            if (shouldLoadEnvironment) {
+              setTimeout(() => {
+                if (this.panel) {
+                  this.handleLoadEnvironment(shouldLoadEnvironment);
+                }
+              }, 50);
+            }
             break;
           case 'loadEnvironment':
             await this.handleLoadEnvironment(message.data.name);
@@ -568,6 +582,7 @@ export class WebviewManager {
         const vscode = acquireVsCodeApi();
         let headerCounter = 0;
         let confirmCallback = null;
+        let originalEnvironmentName = null; // Track the original name when editing
 
         // Confirmation dialog management
         const confirmDialog = document.getElementById('confirmDialog');
@@ -591,11 +606,13 @@ export class WebviewManager {
 
         confirmOk.addEventListener('click', () => hideConfirm(true));
         confirmCancel.addEventListener('click', () => hideConfirm(false));
-        confirmDialog.addEventListener('click', (e) => {
-            if (e.target === confirmDialog) {
-                hideConfirm(false);
-            }
-        });
+        // Removed: Close confirm dialog when clicking outside
+        // Require explicit button click to prevent accidental dismissal
+        // confirmDialog.addEventListener('click', (e) => {
+        //     if (e.target === confirmDialog) {
+        //         hideConfirm(false);
+        //     }
+        // });
 
         // Modal management
         const modalOverlay = document.getElementById('modalOverlay');
@@ -617,17 +634,19 @@ export class WebviewManager {
             document.getElementById('credentialsForm').reset();
             document.getElementById('customHeadersContainer').innerHTML = '';
             headerCounter = 0;
+            originalEnvironmentName = null; // Reset when adding new
             openModal('Add New Environment');
         });
 
         closeModal.addEventListener('click', closeModalFn);
 
-        // Close modal when clicking outside
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeModalFn();
-            }
-        });
+        // Removed: Close modal when clicking outside
+        // The modal should only close when explicitly clicking the X button
+        // modalOverlay.addEventListener('click', (e) => {
+        //     if (e.target === modalOverlay) {
+        //         closeModalFn();
+        //     }
+        // });
 
         // Dynamic header management
         document.getElementById('addHeaderBtn').addEventListener('click', () => {
@@ -721,6 +740,7 @@ export class WebviewManager {
 
             const credentials = {
                 environmentName: document.getElementById('environmentName').value,
+                originalEnvironmentName: originalEnvironmentName, // Include original name for updates
                 provider: document.getElementById('provider').value,
                 tokenEndpoint: document.getElementById('tokenEndpoint').value,
                 clientId: document.getElementById('clientId').value,
@@ -775,8 +795,8 @@ export class WebviewManager {
                     displayEnvironments(message.data.environments, message.data.currentEnv);
                     break;
                 case 'credentialsSaved':
-                    // Keep the form as-is (don't reset) and close the modal
-                    closeModalFn();
+                    // Keep the form as-is and reload the environments list
+                    // Don't close the modal - let the user close it manually
                     loadEnvironments();
                     break;
                 case 'environmentDeleted':
@@ -785,6 +805,9 @@ export class WebviewManager {
                     break;
                 case 'environmentLoaded':
                     const env = message.data;
+
+                    // Store the original name for updates
+                    originalEnvironmentName = env.name;
 
                     // Populate form fields
                     document.getElementById('environmentName').value = env.name;
@@ -804,6 +827,9 @@ export class WebviewManager {
                     headers.forEach(header => {
                         addHeaderRow(header.key, header.value);
                     });
+
+                    // Open the modal with edit title
+                    openModal('Edit Environment');
                     break;
             }
         });
@@ -855,6 +881,19 @@ export class WebviewManager {
         customHeaders: data.customHeaders || []
       };
 
+      // Check if we're updating an existing environment (rename scenario)
+      if (data.originalEnvironmentName && data.originalEnvironmentName !== data.environmentName) {
+        // Delete the old environment
+        await this.storageManager.deleteEnvironment(data.originalEnvironmentName);
+
+        // Check if the deleted environment was the current one
+        const currentEnv = await this.storageManager.getCurrentEnvironment();
+        if (currentEnv === data.originalEnvironmentName) {
+          // Update current environment to new name
+          await this.storageManager.setCurrentEnvironment(data.environmentName);
+        }
+      }
+
       await this.storageManager.saveEnvironment({
         name: data.environmentName,
         credentials
@@ -894,16 +933,12 @@ export class WebviewManager {
       };
 
       const oauthClient = new OAuthClient(credentials);
-      const isValid = await oauthClient.validateCredentials();
-
-      if (isValid) {
-        vscode.window.showInformationMessage('✓ Credentials are valid!');
-      } else {
-        vscode.window.showErrorMessage('✗ Invalid credentials. Please check your configuration.');
-      }
+      await oauthClient.validateCredentials();
+      vscode.window.showInformationMessage('✓ Credentials are valid!');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      vscode.window.showErrorMessage(`Credential test failed: ${errorMessage}`);
+      // Show error in modal dialog for better visibility
+      vscode.window.showErrorMessage(errorMessage, { modal: true });
     }
   }
 
