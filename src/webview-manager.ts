@@ -25,7 +25,7 @@ export class WebviewManager {
       vscode.ViewColumn.One,
       {
         enableScripts: true,
-        retainContextWhenHidden: true,
+        retainContextWhenHidden: false,
         enableCommandUris: true,
         enableForms: true
       }

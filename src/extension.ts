@@ -142,4 +142,10 @@ export function deactivate() {
   if (statusBarManager) {
     statusBarManager.dispose();
   }
+  if (environmentsTreeProvider) {
+    environmentsTreeProvider.dispose();
+  }
+  if (tokensTreeProvider) {
+    tokensTreeProvider.dispose();
+  }
 }

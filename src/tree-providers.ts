@@ -12,6 +12,10 @@ export class EnvironmentsTreeProvider implements vscode.TreeDataProvider<Environ
     this._onDidChangeTreeData.fire();
   }
 
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
+  }
+
   getTreeItem(element: EnvironmentTreeItem): vscode.TreeItem {
     return element;
   }
@@ -49,6 +53,10 @@ export class TokensTreeProvider implements vscode.TreeDataProvider<TokenTreeItem
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
+  }
+
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
   }
 
   getTreeItem(element: TokenTreeItem): vscode.TreeItem {
