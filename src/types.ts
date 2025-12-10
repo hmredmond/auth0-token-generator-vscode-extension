@@ -6,6 +6,11 @@ export interface CustomHeader {
   value: string;
 }
 
+export interface CustomBodyField {
+  key: string;
+  value: string;
+}
+
 export interface OAuthCredentials {
   provider: string; // e.g., "Auth0", "Okta", "Custom"
   tokenEndpoint: string; // Full URL to the token endpoint
@@ -17,6 +22,7 @@ export interface OAuthCredentials {
   authMethod?: AuthMethod; // defaults to 'body'
   contentType?: ContentType; // defaults to 'application/json'
   customHeaders?: CustomHeader[]; // defaults to []
+  customBodyFields?: CustomBodyField[]; // defaults to []
 }
 
 export interface OAuthEnvironment {

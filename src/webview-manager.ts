@@ -614,6 +614,31 @@ export class WebviewManager {
             <div id="customHeadersContainer"></div>
             <button type="button" class="button secondary" id="addHeaderBtn">+ Add Header</button>
 
+            <div class="section-header" style="margin-top: 24px;">
+                <div class="section-title" style="margin: 0;">Custom Body Fields (Optional)</div>
+                <span class="info-icon">i
+                    <span class="tooltip">
+                        <strong>Custom Request Body Fields</strong>
+                        For non-standard OAuth APIs, you can completely customize the request body structure. When custom body fields are defined, they <strong>replace</strong> the standard OAuth fields (client_id, client_secret, etc.).
+                        <br><br>
+                        <strong>Use Cases:</strong><br>
+                        • APIs that use "key" instead of "client_id"<br>
+                        • APIs that require additional fields like "groupHash"<br>
+                        • Non-OAuth APIs with custom authentication
+                        <br><br>
+                        <strong>Examples:</strong><br>
+                        • Field: <code>key</code>, Value: <code>\${API_KEY}</code><br>
+                        • Field: <code>secret</code>, Value: <code>\${API_SECRET}</code><br>
+                        • Field: <code>audience</code>, Value: <code>https://api.example.com</code><br>
+                        • Field: <code>groupHash</code>, Value: <code>{tenant:group}</code>
+                        <br><br>
+                        Environment variables are supported using <code>\${ENV_VAR_NAME}</code> syntax.
+                    </span>
+                </span>
+            </div>
+            <div id="customBodyFieldsContainer"></div>
+            <button type="button" class="button secondary" id="addBodyFieldBtn">+ Add Body Field</button>
+
             <div style="margin-top: 24px;">
                 <button type="submit" class="button">Save Credentials</button>
                 <button type="button" class="button secondary" id="testBtn">Test Connection</button>
@@ -726,7 +751,9 @@ export class WebviewManager {
             // Clear the form for new environment
             document.getElementById('credentialsForm').reset();
             document.getElementById('customHeadersContainer').innerHTML = '';
+            document.getElementById('customBodyFieldsContainer').innerHTML = '';
             headerCounter = 0;
+            bodyFieldCounter = 0;
             originalEnvironmentName = null; // Reset when adding new
             openModal('Add New Environment');
         });
@@ -836,6 +863,60 @@ export class WebviewManager {
             return headers;
         }
 
+        // Dynamic body field management
+        let bodyFieldCounter = 0;
+
+        document.getElementById('addBodyFieldBtn').addEventListener('click', () => {
+            addBodyFieldRow();
+        });
+
+        function addBodyFieldRow(key = '', value = '') {
+            const fieldId = \`bodyfield-\${bodyFieldCounter++}\`;
+            const container = document.getElementById('customBodyFieldsContainer');
+
+            const fieldRow = document.createElement('div');
+            fieldRow.className = 'header-row';
+            fieldRow.id = fieldId;
+            fieldRow.innerHTML = \`
+                <input type="text"
+                       class="bodyfield-key"
+                       placeholder="Field name (e.g., key, secret, groupHash)"
+                       value="\${key}">
+                <input type="text"
+                       class="bodyfield-value"
+                       placeholder="Field value (use \\\${ENV_VAR} for placeholders)"
+                       value="\${value}">
+                <button type="button" class="button secondary" onclick="removeBodyField('\${fieldId}')">
+                    Remove
+                </button>
+            \`;
+
+            container.appendChild(fieldRow);
+        }
+
+        window.removeBodyField = function(fieldId) {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.remove();
+            }
+        };
+
+        function getCustomBodyFields() {
+            const fieldRows = document.querySelectorAll('#customBodyFieldsContainer .header-row');
+            const fields = [];
+
+            fieldRows.forEach(row => {
+                const key = row.querySelector('.bodyfield-key').value.trim();
+                const value = row.querySelector('.bodyfield-value').value.trim();
+
+                if (key && value) {
+                    fields.push({ key, value });
+                }
+            });
+
+            return fields;
+        }
+
         // Set up event delegation for environment action buttons
         document.addEventListener('click', (e) => {
             // Find the element with data-action (traverse up if needed)
@@ -896,7 +977,8 @@ export class WebviewManager {
                 scope: document.getElementById('scope').value,
                 authMethod: document.getElementById('authMethod').value,
                 contentType: document.getElementById('contentType').value,
-                customHeaders: getCustomHeaders()
+                customHeaders: getCustomHeaders(),
+                customBodyFields: getCustomBodyFields()
             };
 
             vscode.postMessage({
@@ -915,7 +997,8 @@ export class WebviewManager {
                 scope: document.getElementById('scope').value,
                 authMethod: document.getElementById('authMethod').value,
                 contentType: document.getElementById('contentType').value,
-                customHeaders: getCustomHeaders()
+                customHeaders: getCustomHeaders(),
+                customBodyFields: getCustomBodyFields()
             };
 
             vscode.postMessage({
@@ -982,6 +1065,14 @@ export class WebviewManager {
                         addHeaderRow(header.key, header.value);
                     });
 
+                    // Clear and populate custom body fields
+                    document.getElementById('customBodyFieldsContainer').innerHTML = '';
+                    bodyFieldCounter = 0;
+                    const bodyFields = env.credentials.customBodyFields || [];
+                    bodyFields.forEach(field => {
+                        addBodyFieldRow(field.key, field.value);
+                    });
+
                     // Update field labels based on auth method
                     updateFieldLabels();
 
@@ -1034,7 +1125,8 @@ export class WebviewManager {
         scope: data.scope || undefined,
         authMethod: data.authMethod || 'body',
         contentType: data.contentType || 'application/json',
-        customHeaders: data.customHeaders || []
+        customHeaders: data.customHeaders || [],
+        customBodyFields: data.customBodyFields || []
       };
 
       // Check if we're updating an existing environment (rename scenario)
@@ -1099,7 +1191,8 @@ export class WebviewManager {
         scope: data.scope || undefined,
         authMethod: data.authMethod || 'body',
         contentType: data.contentType || 'application/json',
-        customHeaders: data.customHeaders || []
+        customHeaders: data.customHeaders || [],
+        customBodyFields: data.customBodyFields || []
       };
 
       const oauthClient = new OAuthClient(credentials);

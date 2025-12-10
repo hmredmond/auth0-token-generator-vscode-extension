@@ -19,6 +19,7 @@ export class OAuthClient {
     const authMethod = this.credentials.authMethod || 'body';
     const contentType = this.credentials.contentType || 'application/json';
     const customHeaders = this.credentials.customHeaders || [];
+    const customBodyFields = this.credentials.customBodyFields || [];
 
     // Build headers
     const headers: Record<string, string> = {
@@ -38,10 +39,17 @@ export class OAuthClient {
       headers[header.key] = this.substituteEnvVars(header.value);
     }
 
-    // Build payload based on auth method
+    // Build payload based on auth method and custom body fields
     let payload: any;
-    if (authMethod === 'body') {
-      // Original JSON body approach
+
+    if (customBodyFields.length > 0) {
+      // Custom body mode - use only custom fields with env var substitution
+      payload = {};
+      for (const field of customBodyFields) {
+        payload[field.key] = this.substituteEnvVars(field.value);
+      }
+    } else if (authMethod === 'body') {
+      // Standard OAuth body approach
       payload = {
         client_id: clientId,
         client_secret: clientSecret,

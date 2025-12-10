@@ -13,6 +13,7 @@ A VS Code extension that generates bearer tokens for OAuth providers using the c
 - 🎨 **Responsive Design**: UI adapts seamlessly to narrow panels and different screen sizes
 - 🔑 **Multiple Auth Methods**: Supports both request body credentials and Basic Authentication headers
 - 🎯 **Custom Headers**: Add custom HTTP headers to token requests with environment variable support
+- 🛠️ **Custom Body Fields**: Fully customize request body structure for non-standard OAuth APIs
 - ⚡ **Quick Token Generation**: Generate bearer tokens with a single command or from the sidebar
 - 📋 **Clipboard Integration**: Automatically copies generated tokens to clipboard
 - 💾 **Token Caching**: Caches valid tokens to avoid unnecessary API calls
@@ -162,6 +163,41 @@ When you select "Basic Authentication Header" as the authentication method, the 
 
 This helps clarify that in Basic Auth mode, these fields represent the username and password credentials rather than OAuth client credentials. The underlying functionality remains the same - the values are Base64-encoded and sent in the Authorization header.
 
+### Custom Body Fields
+
+For non-standard OAuth implementations or custom authentication APIs, you can completely customize the request body structure using **Custom Body Fields**.
+
+**When to use Custom Body Fields:**
+- Your API uses different field names (e.g., `key` instead of `client_id`)
+- Your API requires additional fields not in standard OAuth (e.g., `groupHash`, `tenantId`)
+- You're working with a proprietary authentication API that doesn't follow OAuth standards
+
+**How it works:**
+When custom body fields are defined, they **completely replace** the standard OAuth body structure. The extension will send exactly the fields you specify, giving you full control over the request body.
+
+**Example: Custom Authentication API**
+
+Your API expects this body structure:
+```json
+{
+  "key": "your-api-key",
+  "secret": "your-api-secret",
+  "audience": "https://api.example.com",
+  "groupHash": "{tenant:group}"
+}
+```
+
+Configure custom body fields:
+1. Field: `key`, Value: `${API_KEY}`
+2. Field: `secret`, Value: `${API_SECRET}`
+3. Field: `audience`, Value: `https://api.example.com`
+4. Field: `groupHash`, Value: `{tenant:group}`
+
+The extension will send exactly these fields with environment variable substitution applied.
+
+**Import/Export Support:**
+Custom body fields are included when you export/import environments, making it easy to share configurations across teams.
+
 ### Environment Variables Support
 
 You can use environment variables in **any credential field** using the `${VARIABLE_NAME}` syntax. This is especially useful for keeping secrets out of your stored configurations.
@@ -170,6 +206,7 @@ You can use environment variables in **any credential field** using the `${VARIA
 - Token Endpoint URL
 - Client ID
 - Client Secret
+- Custom Body Field Values
 - Audience
 - Scope
 - Custom Header Values
