@@ -2,7 +2,7 @@
   "name": "oauth-token-generator",
   "displayName": "OAuth Token Generator",
   "description": "Generate OAuth bearer tokens using client credentials flow directly from VS Code",
-  "publisher": "HannahRedmond",
+  "publisher": "CodeMaman",
   "icon": "assets/avatar.png",
   "galleryBanner": {
     "color": "#000000",
