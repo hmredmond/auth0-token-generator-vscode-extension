@@ -804,12 +804,18 @@ export class WebviewManager {
         document.addEventListener('click', (e) => {
             // Find the element with data-action (traverse up if needed)
             let target = e.target;
-            while (target && target !== document.body) {
+            let foundAction = false;
+
+            while (target && target !== document.body && !foundAction) {
                 if (target.dataset && target.dataset.action) {
                     const action = target.dataset.action;
                     const envName = target.dataset.envName;
 
                     console.log('Action triggered:', action, 'for environment:', envName);
+
+                    // Stop propagation to prevent triggering parent actions
+                    e.stopPropagation();
+                    foundAction = true;
 
                     if (action === 'delete') {
                         console.log('Delete action triggered');
@@ -964,8 +970,8 @@ export class WebviewManager {
                                 <div class="environment-domain">\${env.credentials.provider} - \${env.credentials.tokenEndpoint}</div>
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <button class="button secondary icon" data-action="getToken" data-env-name="\${env.name}" title="Get Token" onclick="event.stopPropagation()">↻</button>
-                                <button class="button secondary icon" data-action="delete" data-env-name="\${env.name}" title="Delete" onclick="event.stopPropagation()">×</button>
+                                <button class="button secondary icon" data-action="getToken" data-env-name="\${env.name}" title="Get Token">↻</button>
+                                <button class="button secondary icon" data-action="delete" data-env-name="\${env.name}" title="Delete">×</button>
                             </div>
                         </div>
                     </div>

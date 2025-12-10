@@ -154,6 +154,11 @@ export function activate(context: vscode.ExtensionContext) {
     () => commandManager.configureCredentials()
   );
 
+  const viewAllEnvironmentsCommand = vscode.commands.registerCommand(
+    'oauth-token-generator.viewAllEnvironments',
+    () => commandManager.viewAllEnvironments()
+  );
+
   const editEnvironmentFromTreeCommand = vscode.commands.registerCommand(
     'oauth-token-generator.editEnvironmentFromTree',
     async (item: any) => {
@@ -206,6 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
     refreshEnvironmentsCommand,
     refreshTokensCommand,
     openConfigFromTreeCommand,
+    viewAllEnvironmentsCommand,
     editEnvironmentFromTreeCommand,
     generateTokenFromTreeInlineCommand,
     exportEnvironmentsCommand,

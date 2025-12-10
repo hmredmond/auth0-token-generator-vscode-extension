@@ -123,6 +123,12 @@ export class CommandManager {
     await this.webviewManager.showConfigurationPanel();
   }
 
+  async viewAllEnvironments(): Promise<void> {
+    // Open the configuration panel without loading any specific environment
+    // This shows the main list view
+    await this.webviewManager.showConfigurationPanel();
+  }
+
   async editEnvironment(environmentName: string): Promise<void> {
     await this.webviewManager.showConfigurationPanel(environmentName);
   }

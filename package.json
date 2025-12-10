@@ -16,7 +16,7 @@
     "url": "https://github.com/hmredmond/auth0-token-generator-vscode-extension/issues"
   },
   "homepage": "https://github.com/hmredmond/auth0-token-generator-vscode-extension#readme",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -80,6 +80,12 @@
         "icon": "$(add)"
       },
       {
+        "command": "oauth-token-generator.viewAllEnvironments",
+        "title": "View All Environments",
+        "category": "OAuth",
+        "icon": "$(list-unordered)"
+      },
+      {
         "command": "oauth-token-generator.editEnvironmentFromTree",
         "title": "Edit Environment",
         "category": "OAuth",
@@ -107,24 +113,29 @@
     "menus": {
       "view/title": [
         {
-          "command": "oauth-token-generator.importEnvironments",
+          "command": "oauth-token-generator.viewAllEnvironments",
           "when": "view == auth0Environments",
           "group": "navigation@1"
         },
         {
-          "command": "oauth-token-generator.exportEnvironments",
+          "command": "oauth-token-generator.importEnvironments",
           "when": "view == auth0Environments",
           "group": "navigation@2"
         },
         {
-          "command": "oauth-token-generator.refreshEnvironments",
+          "command": "oauth-token-generator.exportEnvironments",
           "when": "view == auth0Environments",
           "group": "navigation@3"
         },
         {
-          "command": "oauth-token-generator.openConfigFromTree",
+          "command": "oauth-token-generator.refreshEnvironments",
           "when": "view == auth0Environments",
           "group": "navigation@4"
+        },
+        {
+          "command": "oauth-token-generator.openConfigFromTree",
+          "when": "view == auth0Environments",
+          "group": "navigation@5"
         },
         {
           "command": "oauth-token-generator.refreshTokens",

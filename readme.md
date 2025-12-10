@@ -81,8 +81,8 @@ The extension adds a sidebar panel to the left-hand activity bar where you can:
 
 - **View all configured environments** - See your dev, staging, and prod configurations at a glance
 - **View cached tokens** - Check which tokens are stored and when they expire
-- **Generate tokens quickly** - Click any environment to generate a token instantly
-- **Refresh views** - Update the lists with the refresh button
+- **Quick actions** - Edit, generate tokens, and manage environments with intuitive buttons
+- **Toolbar actions** - Import, export, refresh, and add new environments
 
 **To access the sidebar:**
 1. Look for the key icon (🔑) in the left-hand activity bar
@@ -91,11 +91,20 @@ The extension adds a sidebar panel to the left-hand activity bar where you can:
    - **Environments**: All your configured OAuth environments
    - **Generated Tokens**: Currently cached tokens with expiry times
 
-**Working with the sidebar:**
-- Click any environment to generate a token and copy it to your clipboard
-- Click any cached token to copy it without making a new API call
-- Use the refresh button (🔄) to update the views
-- Use the add button (➕) to configure new credentials
+**Working with environments in the sidebar:**
+- **Click an environment item** → Opens the configuration editor for that environment
+- **Click the 🔑 key icon** (on hover) → Generates and copies a token to clipboard
+- **Toolbar buttons** (top of panel):
+  - **📋 List icon** - View all environments in the main configuration panel
+  - **📥 Import** - Import environments from a JSON file
+  - **💾 Export** - Export all environments to a JSON file
+  - **🔄 Refresh** - Refresh the environment list
+  - **➕ Add** - Add a new environment
+
+**Working with tokens:**
+- Click any cached token to copy it to clipboard
+- Tokens show their expiry time and automatically refresh when expired
+- The extension caches tokens to reduce API calls
 
 ### 4. Generate Bearer Tokens
 
@@ -202,22 +211,29 @@ code
 The configuration panel provides easy management of all your OAuth environments:
 
 **To edit an environment:**
-1. Open `OAuth: Configure Credentials`
-2. Scroll to the "Configured Environments" section
-3. Click the **✎ (Edit)** icon button on the environment you want to modify
-4. The form will populate with existing values
-5. Make your changes and click **Save Credentials**
+- **From sidebar**: Click on the environment item in the OAuth sidebar panel
+- **From configuration panel**:
+  1. Open `OAuth: Configure Credentials`
+  2. Click anywhere on the environment item you want to edit
+  3. The form will populate with existing values
+  4. Make your changes and click **Save Credentials**
+
+**To rename an environment:**
+1. Edit the environment (using either method above)
+2. Change the "Environment Name" field
+3. Click **Save Credentials**
+4. The environment will be renamed with a confirmation message
 
 **To delete an environment:**
-1. Open `OAuth: Configure Credentials`
-2. Scroll to the "Configured Environments" section
-3. Click the **× (Delete)** icon button on the environment
-4. Confirm the deletion when prompted
+- **From configuration panel**:
+  1. Open `OAuth: Configure Credentials`
+  2. Click the **× (Delete)** button on the environment item
+  3. Confirm the deletion when prompted
 
 **To generate a token for a specific environment:**
-1. Open `OAuth: Configure Credentials`
-2. Click the **↻ (Get Token)** icon button next to any environment
-3. The token will be generated and copied to your clipboard
+- **From sidebar**: Click the **🔑 (key)** icon that appears when you hover over an environment
+- **From configuration panel**: Click the **↻ (refresh)** button next to any environment
+- The token will be generated and automatically copied to your clipboard
 
 ## Configuration
 
