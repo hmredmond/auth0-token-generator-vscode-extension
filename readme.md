@@ -144,7 +144,7 @@ Once configured, you can generate tokens using any of these methods:
 
 ### Authentication Methods
 
-The extension supports two authentication methods for OAuth token requests:
+The extension supports three authentication methods for OAuth token requests:
 
 **1. Credentials in Request Body (Default)**
 - Standard OAuth 2.0 client credentials flow
@@ -156,12 +156,19 @@ The extension supports two authentication methods for OAuth token requests:
 - Sends credentials in the `Authorization: Basic <base64>` header
 - Required by some custom OAuth providers
 
-**Dynamic Form Labels:**
-When you select "Basic Authentication Header" as the authentication method, the form automatically updates the field labels:
-- "Client ID" → "Username"
-- "Client Secret" → "Password"
+**3. Custom JWT**
+- For custom authentication APIs that use JWT-based authentication
+- Use this with **Custom Body Fields** to completely control the request structure
+- Ideal for proprietary authentication APIs that don't follow standard OAuth patterns
+- Credentials are still sent in request body, but labeled as "Client credentials for JWT authentication"
 
-This helps clarify that in Basic Auth mode, these fields represent the username and password credentials rather than OAuth client credentials. The underlying functionality remains the same - the values are Base64-encoded and sent in the Authorization header.
+**Dynamic Form Labels:**
+The form automatically updates field labels based on your selected authentication method:
+- **Basic Authentication Header**: "Client ID" → "Username", "Client Secret" → "Password"
+- **Custom JWT**: Help text updates to clarify these are for JWT authentication
+- **Credentials in Request Body**: Standard OAuth field labels
+
+This helps clarify the purpose of credential fields for different authentication types. The underlying functionality adapts to your selected method while maintaining secure credential handling.
 
 ### Custom Body Fields
 

@@ -537,14 +537,14 @@ export class WebviewManager {
 
             <div class="form-group">
                 <label for="provider">OAuth Provider:</label>
-                <select id="provider" required>
-                    <option value="">-- Select Provider --</option>
+                <select id="provider">
+                    <option value="">None</option>
                     <option value="Auth0">Auth0</option>
                     <option value="Okta">Okta</option>
                     <option value="Azure AD">Azure AD</option>
                     <option value="Custom">Custom</option>
                 </select>
-                <div class="help-text">Select your OAuth provider</div>
+                <div class="help-text">Select your OAuth provider (optional)</div>
             </div>
 
             <div class="form-group">
@@ -582,6 +582,7 @@ export class WebviewManager {
                 <select id="authMethod" required>
                     <option value="body">Credentials in Request Body (Default)</option>
                     <option value="basic">Basic Authentication Header</option>
+                    <option value="custom-jwt">Custom JWT</option>
                 </select>
                 <div class="help-text">How to send client credentials to the OAuth provider</div>
             </div>
@@ -786,15 +787,22 @@ export class WebviewManager {
         const clientSecretInput = document.getElementById('clientSecret');
 
         function updateFieldLabels() {
-            const isBasicAuth = authMethodSelect.value === 'basic';
+            const authMethod = authMethodSelect.value;
 
-            if (isBasicAuth) {
+            if (authMethod === 'basic') {
                 clientIdLabel.textContent = 'Username:';
                 clientSecretLabel.textContent = 'Password:';
                 clientIdHelp.textContent = 'Username for Basic Authentication (supports \${ENV_VAR} syntax)';
                 clientSecretHelp.textContent = 'Password for Basic Authentication (supports \${ENV_VAR} syntax)';
                 clientIdInput.placeholder = 'Your username or \${USERNAME}';
                 clientSecretInput.placeholder = 'Your password or \${PASSWORD}';
+            } else if (authMethod === 'custom-jwt') {
+                clientIdLabel.textContent = 'Client ID:';
+                clientSecretLabel.textContent = 'Client Secret:';
+                clientIdHelp.textContent = 'Client credentials for JWT authentication (supports \${ENV_VAR} syntax)';
+                clientSecretHelp.textContent = 'Client secret for JWT authentication (supports \${ENV_VAR} syntax)';
+                clientIdInput.placeholder = 'Your client ID or \${CLIENT_ID}';
+                clientSecretInput.placeholder = 'Your client secret or \${CLIENT_SECRET}';
             } else {
                 clientIdLabel.textContent = 'Client ID:';
                 clientSecretLabel.textContent = 'Client Secret:';
@@ -810,6 +818,43 @@ export class WebviewManager {
 
         // Update labels on initial load based on current selection
         updateFieldLabels();
+
+        // Dynamic field requirements based on provider selection
+        const providerSelect = document.getElementById('provider');
+        const tokenEndpointInput = document.getElementById('tokenEndpoint');
+        const audienceLabel = document.querySelector('label[for="audience"]');
+
+        function updateFieldRequirements() {
+            const isNoneProvider = providerSelect.value === '';
+
+            if (isNoneProvider) {
+                // Make fields optional when "None" is selected
+                tokenEndpointInput.removeAttribute('required');
+                clientIdInput.removeAttribute('required');
+                clientSecretInput.removeAttribute('required');
+
+                // Update labels to show (optional)
+                document.querySelector('label[for="tokenEndpoint"]').textContent = 'Token Endpoint URL (optional):';
+                clientIdLabel.textContent = clientIdLabel.textContent.replace(':', ' (optional):');
+                clientSecretLabel.textContent = clientSecretLabel.textContent.replace(':', ' (optional):');
+            } else {
+                // Make fields required when a provider is selected
+                tokenEndpointInput.setAttribute('required', '');
+                clientIdInput.setAttribute('required', '');
+                clientSecretInput.setAttribute('required', '');
+
+                // Remove (optional) from labels
+                document.querySelector('label[for="tokenEndpoint"]').textContent = 'Token Endpoint URL:';
+                // Restore original label based on auth method
+                updateFieldLabels();
+            }
+        }
+
+        // Update requirements when provider changes
+        providerSelect.addEventListener('change', updateFieldRequirements);
+
+        // Update requirements on initial load
+        updateFieldRequirements();
 
         // Dynamic header management
         document.getElementById('addHeaderBtn').addEventListener('click', () => {
@@ -848,7 +893,7 @@ export class WebviewManager {
         };
 
         function getCustomHeaders() {
-            const headerRows = document.querySelectorAll('.header-row');
+            const headerRows = document.querySelectorAll('#customHeadersContainer .header-row');
             const headers = [];
 
             headerRows.forEach(row => {

@@ -83,6 +83,7 @@ export class OAuthClient {
 
       return response.data;
     } catch (error) {
+
       if (axios.isAxiosError(error)) {
         const statusCode = error.response?.status;
         const errorData = error.response?.data;

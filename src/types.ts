@@ -1,4 +1,4 @@
-export type AuthMethod = 'body' | 'basic';
+export type AuthMethod = 'body' | 'basic' | 'custom-jwt';
 export type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
 
 export interface CustomHeader {
