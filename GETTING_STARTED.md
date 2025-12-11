@@ -106,15 +106,20 @@ The extension now includes a dedicated sidebar panel for quick access to environ
 - Lists all your configured OAuth environments
 - Current environment is highlighted with a green icon
 - Click any environment to instantly generate a token
-- Use the ➕ button to add new credentials
-- Use the 🔄 button to refresh the list
+- **Toolbar buttons:**
+  - **List icon** - View all environments in the main configuration panel
+  - **Import icon** - Import environments from a JSON file
+  - **Save icon** - Export all environments to a JSON file
+  - **Refresh icon** - Refresh the environment list
+  - **Add icon** - Add a new environment
 
 **🔐 Generated Tokens Section**
 - Shows all cached tokens
 - Displays expiry time for each token (e.g., "Expires in 25m")
 - Click any token to copy it to clipboard
 - Automatically updates as tokens expire
-- Use the 🔄 button to refresh the list
+- **Toolbar button:**
+  - **Refresh icon** - Refresh the token list
 
 **Example Workflow:**
 ```
@@ -255,7 +260,48 @@ set AUTH0_AUDIENCE=https://api.mycompany.com
 code
 ```
 
-### Example 2: Mixed Static and Dynamic Values
+### Example 2: Using .env Files (Recommended)
+
+The extension automatically loads environment variables from `.env` files in your workspace root when it activates.
+
+**Step 1:** Create a `.env` or `.env.local` file in your workspace:
+```bash
+# .env.local
+AUTH0_TOKEN_ENDPOINT=https://mycompany.auth0.com/oauth/token
+AUTH0_CLIENT_ID=abc123xyz456
+AUTH0_CLIENT_SECRET=supersecretkey789
+AUTH0_AUDIENCE=https://api.mycompany.com
+```
+
+**Step 2:** Configure your environment with placeholders:
+```
+Environment Name: Production
+Token Endpoint: ${AUTH0_TOKEN_ENDPOINT}
+Client ID: ${AUTH0_CLIENT_ID}
+Client Secret: ${AUTH0_CLIENT_SECRET}
+Audience: ${AUTH0_AUDIENCE}
+```
+
+**Step 3:** Add `.env.local` to your `.gitignore`:
+```
+.env.local
+.env.development
+.env.production
+```
+
+**Supported .env files** (loaded in order):
+- `.env` - Base environment variables
+- `.env.local` - Local overrides (should be in `.gitignore`)
+- `.env.development` - Development-specific variables
+- `.env.production` - Production-specific variables
+
+**Benefits:**
+- No need to launch VS Code from terminal
+- Works automatically when extension activates
+- Easy to manage multiple environment configs
+- Safe to share `.env.example` with team (without real secrets)
+
+### Example 3: Mixed Static and Dynamic Values
 
 You can mix hardcoded values with environment variables:
 
@@ -267,7 +313,7 @@ Client Secret: ${DEV_CLIENT_SECRET}
 Audience: https://api.mycompany.com
 ```
 
-### Example 3: Custom Headers with Environment Variables
+### Example 4: Custom Headers with Environment Variables
 
 Your API requires a tenant context that changes per developer:
 
@@ -277,7 +323,9 @@ Custom Headers:
   Header Value: ${TENANT_ID}
 ```
 
-**Example 4: Multiple Environment Variables**
+### Example 5: Multiple Environment Variables
+
+**Scenario:** Your API requires multiple custom headers with some dynamic values:
 
 ```
 Header 1:
@@ -296,13 +344,17 @@ Header 3:
 ### Important Notes
 
 - If an environment variable is not found, the placeholder text (e.g., `${CLIENT_ID}`) will be used as-is
-- VS Code must be launched from a terminal to inherit environment variables
+- **Recommended:** Use `.env` files in your workspace root - they're loaded automatically when the extension activates
+- **Alternative:** Launch VS Code from a terminal to inherit environment variables from your shell
 - Environment variables are evaluated at runtime when tokens are generated
-- Changes to environment variables require restarting VS Code
+- Changes to `.env` files require reloading the VS Code window (`Cmd+R` / `Ctrl+R`) or restarting VS Code
+- Changes to shell environment variables require restarting VS Code
 
 ---
 
 ## Authentication Methods
+
+The extension supports three different authentication methods to work with various OAuth providers and custom APIs.
 
 ### Method 1: Credentials in Request Body (Default)
 
@@ -338,10 +390,37 @@ Authentication Method: Basic Authentication Header
 Content Type: Form Encoded (application/x-www-form-urlencoded)
 ```
 
+**Form labels automatically change:**
+- "Client ID" → "Username"
+- "Client Secret" → "Password"
+
 **Providers that may use this:**
 - Some banking APIs
 - Legacy OAuth implementations
 - Enterprise custom APIs
+
+### Method 3: Custom JWT
+
+**When to use:** Custom authentication APIs that use JWT-based authentication but don't follow standard OAuth patterns
+
+**How it works:** Similar to the default method, but designed for proprietary authentication APIs. Often used with **Custom Body Fields** to completely control the request structure.
+
+**Example configuration:**
+```
+Authentication Method: Custom JWT
+Content Type: JSON (application/json)
+```
+
+**Form behavior:**
+- Help text updates to clarify credentials are for JWT authentication
+- Credentials are still stored securely like other methods
+- Best used in combination with Custom Body Fields (see below)
+
+**When to use Custom JWT:**
+- Your API returns a JWT token but uses custom field names
+- You need full control over the request body structure
+- Working with proprietary authentication systems
+- API documentation specifies "JWT authentication" but not standard OAuth
 
 ---
 
@@ -369,6 +448,115 @@ Content Type: Form Encoded (application/x-www-form-urlencoded)
 ```
 grant_type=client_credentials&client_id=...&client_secret=...&audience=...
 ```
+
+---
+
+## Custom Body Fields
+
+### Overview
+
+For non-standard OAuth implementations or custom authentication APIs, you can completely customize the request body structure using **Custom Body Fields**.
+
+**When to use Custom Body Fields:**
+- Your API uses different field names (e.g., `key` instead of `client_id`)
+- Your API requires additional fields not in standard OAuth (e.g., `groupHash`, `tenantId`)
+- You're working with a proprietary authentication API that doesn't follow OAuth standards
+- Combine with the **Custom JWT** authentication method for full control
+
+### How It Works
+
+When custom body fields are defined, they **completely replace** the standard OAuth body structure. The extension will send exactly the fields you specify, giving you full control over the request body.
+
+### Example 1: Custom Authentication API
+
+**Scenario:** Your API expects this body structure:
+```json
+{
+  "key": "your-api-key",
+  "secret": "your-api-secret",
+  "audience": "https://api.example.com",
+  "groupHash": "{tenant:group}"
+}
+```
+
+**Configuration steps:**
+1. Open `OAuth: Configure Credentials`
+2. Select **Authentication Method**: Custom JWT
+3. Click **"+ Add Custom Body Field"** and add:
+   - Field: `key`, Value: `${API_KEY}`
+   - Field: `secret`, Value: `${API_SECRET}`
+   - Field: `audience`, Value: `https://api.example.com`
+   - Field: `groupHash`, Value: `{tenant:group}`
+4. Test and save
+
+The extension will send exactly these fields with environment variable substitution applied.
+
+### Example 2: Banking API with Additional Fields
+
+**Scenario:** Your banking API requires these fields:
+```json
+{
+  "client_id": "your-client-id",
+  "client_secret": "your-secret",
+  "grant_type": "client_credentials",
+  "tenant_id": "bank-tenant-123",
+  "branch_code": "NYC-001"
+}
+```
+
+**Configuration:**
+1. Authentication Method: Custom JWT
+2. Add custom body fields:
+   - Field: `client_id`, Value: `${CLIENT_ID}`
+   - Field: `client_secret`, Value: `${CLIENT_SECRET}`
+   - Field: `grant_type`, Value: `client_credentials`
+   - Field: `tenant_id`, Value: `bank-tenant-123`
+   - Field: `branch_code`, Value: `NYC-001`
+
+### Example 3: E-commerce Platform API
+
+**Scenario:** Your e-commerce API needs store context:
+```json
+{
+  "apiKey": "store-key",
+  "apiSecret": "store-secret",
+  "storeId": "store-12345",
+  "environment": "production"
+}
+```
+
+**Configuration:**
+1. Authentication Method: Custom JWT
+2. Add custom body fields:
+   - Field: `apiKey`, Value: `${STORE_API_KEY}`
+   - Field: `apiSecret`, Value: `${STORE_API_SECRET}`
+   - Field: `storeId`, Value: `store-12345`
+   - Field: `environment`, Value: `production`
+
+### Working with Custom Body Fields
+
+**Adding fields:**
+1. In the configuration form, scroll to "Custom Body Fields"
+2. Click **"+ Add Custom Body Field"**
+3. Enter the field name and value
+4. Use `${VAR_NAME}` for environment variables
+5. Add as many fields as needed
+
+**Removing fields:**
+1. Click the **×** (delete) button next to any field
+2. Field is removed immediately
+
+**Editing fields:**
+1. Modify the field name or value directly in the form
+2. Changes are saved when you click "Save Credentials"
+
+### Important Notes
+
+- Custom body fields **completely replace** the standard OAuth body
+- The `grant_type` field is NOT automatically added (add it manually if needed)
+- Environment variable substitution works in all field values
+- Custom body fields are included in export/import operations
+- Test your configuration before saving to verify the API accepts your structure
 
 ---
 
@@ -445,6 +633,170 @@ Audience: https://api.mycompany.com
 Staging (Expires in 3600s)
 Audience: https://api-staging.mycompany.com
 ```
+
+---
+
+## Import/Export Environments
+
+### Overview
+
+The extension provides import/export functionality to help you:
+- **Share configurations** with team members
+- **Backup** your environment configurations
+- **Migrate** settings between machines or VS Code installations
+- **Version control** your configurations (without exposing secrets when using environment variables)
+
+### Exporting Environments
+
+**When to export:**
+- Setting up a new team member
+- Creating a backup before making changes
+- Sharing configurations across multiple machines
+- Version controlling your setup (with environment variables)
+
+**How to export:**
+
+**Method 1: From Sidebar (Recommended)**
+1. Open the OAuth sidebar (click the 🔑 icon in the activity bar)
+2. In the "Environments" section, click the **Save icon** in the toolbar
+3. Choose a location and filename (e.g., `oauth-environments.json`)
+4. Click "Save"
+
+**Method 2: From Command Palette**
+1. Press `Ctrl+Shift+P` / `Cmd+Shift+P`
+2. Type: `OAuth: Export Environments`
+3. Choose a location and filename
+4. Click "Save"
+
+**What gets exported:**
+- All environment configurations
+- Token endpoints, provider info
+- Authentication methods and content types
+- Custom headers (including environment variable placeholders)
+- Custom body fields (including environment variable placeholders)
+- Environment variables are saved as `${VAR_NAME}` placeholders (NOT actual values)
+
+**Example export file:**
+```json
+{
+  "environments": [
+    {
+      "name": "Development",
+      "credentials": {
+        "provider": "Auth0",
+        "tokenEndpoint": "${AUTH0_TOKEN_ENDPOINT}",
+        "clientId": "${AUTH0_CLIENT_ID}",
+        "clientSecret": "${AUTH0_CLIENT_SECRET}",
+        "audience": "${AUTH0_AUDIENCE}",
+        "authMethod": "body",
+        "contentType": "application/json",
+        "customHeaders": [
+          {
+            "key": "X-Tenant-Context",
+            "value": "${TENANT_ID}"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### Importing Environments
+
+**When to import:**
+- Setting up on a new machine
+- Restoring from backup
+- Receiving configurations from a team member
+- Switching between different project configurations
+
+**How to import:**
+
+**Method 1: From Sidebar (Recommended)**
+1. Open the OAuth sidebar (click the 🔑 icon)
+2. In the "Environments" section, click the **Import icon** in the toolbar
+3. Select the JSON file to import
+4. Environments are imported and added to your configuration
+
+**Method 2: From Command Palette**
+1. Press `Ctrl+Shift+P` / `Cmd+Shift+P`
+2. Type: `OAuth: Import Environments`
+3. Select the JSON file
+4. Environments are imported
+
+**Import behavior:**
+- Existing environments with the same name are **overwritten**
+- New environments are added
+- Environment variables are NOT imported (you must set them separately)
+- Custom headers and body fields are preserved with their `${VAR_NAME}` placeholders
+
+**After importing:**
+1. Set any required environment variables before launching VS Code
+2. Or use `.env` files in your workspace (see Environment Variables section)
+3. Test your connections to verify everything works
+
+### Sharing Configurations with Teams
+
+**Best practice workflow:**
+
+**Team Lead (Creating shared config):**
+```bash
+1. Configure all environments using environment variable syntax
+   - Client ID: ${AUTH0_CLIENT_ID}
+   - Client Secret: ${AUTH0_CLIENT_SECRET}
+
+2. Export environments to a file
+   - Name it descriptively: "team-oauth-config.json"
+
+3. Share the JSON file via:
+   - Git repository (safe because it uses ${} placeholders)
+   - Slack/Teams
+   - Email
+
+4. Create a separate .env.example file:
+   AUTH0_CLIENT_ID=your-client-id-here
+   AUTH0_CLIENT_SECRET=your-secret-here
+   AUTH0_TOKEN_ENDPOINT=https://your-tenant.auth0.com/oauth/token
+```
+
+**Team Member (Using shared config):**
+```bash
+1. Copy the .env.example to .env.local
+2. Fill in actual credentials (get from team lead or password manager)
+3. Import the team-oauth-config.json file
+4. Test connection
+5. Start generating tokens!
+```
+
+### Security Best Practices
+
+**DO:**
+- ✓ Use environment variable placeholders (`${VAR_NAME}`) in configurations
+- ✓ Share exported JSON files with placeholders
+- ✓ Keep actual credentials in `.env.local` (add to `.gitignore`)
+- ✓ Export regularly as backups
+- ✓ Version control the export file with placeholders
+
+**DON'T:**
+- ✗ Export with hardcoded credentials and commit to git
+- ✗ Share export files with actual secrets via email/Slack
+- ✗ Store export files with real credentials in public places
+- ✗ Forget to document which environment variables are needed
+
+### Troubleshooting Import/Export
+
+**Problem:** Import fails with "Invalid JSON"
+- **Solution:** Open the file in a text editor and verify it's valid JSON
+- Use a JSON validator online if needed
+
+**Problem:** Imported environments don't work
+- **Solution:** Check that you've set all required environment variables
+- Review the exported file to see which `${VAR_NAME}` placeholders exist
+- Set those variables before launching VS Code
+
+**Problem:** Export doesn't include some environments
+- **Solution:** Refresh the environments list first (click refresh icon)
+- Verify the environments exist in the configuration panel
 
 ---
 
@@ -578,17 +930,65 @@ Right: https://mycompany.auth0.com/oauth/token
 3. **Expired Token:** Cached token expired
    - Fix: Generate a fresh token
 
-### Scenario 3: Environment variables not working
+### Scenario 3: Custom body fields not working
+
+**Problem:** API returns error when using custom body fields
+
+**Checklist:**
+1. ✓ Authentication Method is set to "Custom JWT"
+2. ✓ All required fields are defined in custom body fields
+3. ✓ Field names match exactly what the API expects (case-sensitive)
+4. ✓ Values are properly formatted (strings, not JSON objects)
+5. ✓ Environment variables in values are set correctly
+6. ✓ If API needs `grant_type`, it's explicitly added as a custom field
+
+**Common mistake:**
+```
+Wrong:
+  Authentication Method: Credentials in Request Body
+  Custom Body Fields: key=mykey, secret=mysecret
+  (Custom fields are ignored because auth method is not Custom JWT)
+
+Right:
+  Authentication Method: Custom JWT
+  Custom Body Fields:
+    - Field: key, Value: mykey
+    - Field: secret, Value: mysecret
+```
+
+**Debugging:**
+1. Use "Test Connection" to see exact error from API
+2. Check VS Code Developer Console for request details
+3. Verify the API documentation for required fields
+4. Try with a tool like Postman first to confirm the structure
+
+### Scenario 4: Environment variables not working
 
 **Problem:** Environment variable not substituted in credentials or headers
 
 **Checklist:**
-1. ✓ Environment variable is set before launching VS Code
-2. ✓ Syntax is `${VAR_NAME}` (with curly braces)
-3. ✓ VS Code was launched from terminal (to inherit variables)
-4. ✓ Variable name is correct (case-sensitive)
+1. ✓ Syntax is `${VAR_NAME}` (with curly braces)
+2. ✓ Variable name is correct (case-sensitive)
+3. ✓ If using `.env` files:
+   - File exists in workspace root
+   - File is named correctly (`.env`, `.env.local`, etc.)
+   - Variables are in `KEY=value` format (no `export`)
+   - VS Code window was reloaded after creating/editing `.env`
+4. ✓ If using terminal method:
+   - Environment variable is set before launching VS Code
+   - VS Code was launched from terminal (to inherit variables)
 
-**Test:**
+**Test with .env file (Recommended):**
+```bash
+# Create .env.local in workspace root
+echo "CLIENT_ID=your-client-id" > .env.local
+echo "CLIENT_SECRET=your-secret" >> .env.local
+
+# Reload VS Code window
+# Cmd+R (Mac) or Ctrl+R (Windows/Linux)
+```
+
+**Test with terminal method:**
 ```bash
 # Mac/Linux
 echo $CLIENT_ID    # Should print your value
@@ -608,6 +1008,7 @@ If you're unsure whether the variable was substituted:
 1. Check VS Code Developer Console (`Help > Toggle Developer Tools`)
 2. Look for error messages about authentication
 3. If you see literal `${VAR_NAME}` in errors, the variable wasn't set
+4. Try the "Test Connection" button to see detailed error messages
 
 ---
 
