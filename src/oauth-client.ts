@@ -81,7 +81,15 @@ export class OAuthClient {
     try {
       const response = await axios.post(tokenEndpoint, requestData, { headers });
 
-      return response.data;
+      // Normalize response to handle different token formats
+      const normalizedResponse: TokenResponse = {
+        access_token: response.data.access_token || response.data.token || response.data.jwt || response.data.bearer_token,
+        token_type: response.data.token_type || 'Bearer',
+        expires_in: response.data.expires_in || response.data.expiresIn || 3600, // Default to 1 hour if not provided
+        scope: response.data.scope
+      };
+
+      return normalizedResponse;
     } catch (error) {
 
       if (axios.isAxiosError(error)) {
