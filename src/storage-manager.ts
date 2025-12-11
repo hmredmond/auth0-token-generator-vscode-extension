@@ -115,14 +115,24 @@ export class StorageManager {
   async exportEnvironments(): Promise<string> {
     const environments = await this.getEnvironments();
 
-    // Create a sanitized version with secrets masked (only if not empty)
-    const sanitizedEnvironments = environments.map(env => ({
-      ...env,
-      credentials: {
-        ...env.credentials,
-        clientSecret: env.credentials.clientSecret ? '*****' : ''
+    // Create a sanitized version with secrets masked (unless it's an env var or empty)
+    const sanitizedEnvironments = environments.map(env => {
+      const secret = env.credentials.clientSecret;
+      let exportedSecret = secret;
+
+      // Only mask if it's not empty and not an environment variable
+      if (secret && !secret.startsWith('${')) {
+        exportedSecret = '*****';
       }
-    }));
+
+      return {
+        ...env,
+        credentials: {
+          ...env.credentials,
+          clientSecret: exportedSecret
+        }
+      };
+    });
 
     return JSON.stringify(sanitizedEnvironments, null, 2);
   }
