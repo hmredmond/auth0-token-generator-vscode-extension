@@ -16,7 +16,7 @@
     "url": "https://github.com/hmredmond/auth0-token-generator-vscode-extension/issues"
   },
   "homepage": "https://github.com/hmredmond/auth0-token-generator-vscode-extension#readme",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "engines": {
     "vscode": "^1.74.0"
   },
